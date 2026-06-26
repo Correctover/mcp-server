@@ -20,73 +20,58 @@ tags:
   - multi-provider
 tools:
   - name: chat
-    description: "Send a message through the reliability layer with multi-provider routing, 6-dimension output validation, and automatic self-healing failover"
+    description: "Send a chat message to an LLM with automatic output verification. Routes through the best available provider, validates the response across 6 dimensions (structure, schema, latency, cost, identity, integrity), and auto-heals on failure by retrying or failing over to another provider."
   - name: verify
     description: "Validate any content against 6-dimension contracts (structure, schema, latency, cost, identity, integrity)"
   - name: providers
     description: "List all available AI providers with health status and circuit breaker states"
   - name: health
     description: "Check overall engine health and session statistics"
-env:
-  - name: OPENAI_API_KEY
-    description: "OpenAI API key"
-    required: false
-  - name: OPENAI_BASE_URL
-    description: "Override OpenAI base URL (for proxy/mirror)"
-    required: false
-  - name: ANTHROPIC_API_KEY
-    description: "Anthropic API key"
-    required: false
-  - name: ANTHROPIC_BASE_URL
-    description: "Override Anthropic base URL (for proxy/mirror)"
-    required: false
-  - name: DEEPSEEK_API_KEY
-    description: "DeepSeek API key"
-    required: false
-  - name: DEEPSEEK_BASE_URL
-    description: "Override DeepSeek base URL (for proxy/mirror)"
-    required: false
-  - name: MOONSHOT_API_KEY
-    description: "Moonshot / Kimi API key"
-    required: false
-  - name: MOONSHOT_BASE_URL
-    description: "Override Moonshot base URL"
-    required: false
-  - name: ZHIPU_API_KEY
-    description: "Zhipu AI (GLM) API key"
-    required: false
-  - name: ZHIPU_BASE_URL
-    description: "Override Zhipu base URL"
-    required: false
-  - name: DASHSCOPE_API_KEY
-    description: "Alibaba DashScope (Qwen) API key"
-    required: false
-  - name: DASHSCOPE_BASE_URL
-    description: "Override DashScope base URL"
-    required: false
-  - name: SILICONFLOW_API_KEY
-    description: "SiliconFlow API key"
-    required: false
-  - name: SILICONFLOW_BASE_URL
-    description: "Override SiliconFlow base URL"
-    required: false
-  - name: GROQ_API_KEY
-    description: "Groq API key"
-    required: false
-  - name: GROQ_BASE_URL
-    description: "Override Groq base URL"
-    required: false
-  - name: TOGETHER_API_KEY
-    description: "Together AI API key"
-    required: false
-  - name: TOGETHER_BASE_URL
-    description: "Override Together base URL"
-    required: false
-install:
-  command: npx
-  args:
-    - "-y"
-    - correctover-mcp-server
-build:
-  language: go
-  command: go build -o correctover-mcp-server .
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      OPENAI_API_KEY:
+        type: string
+        description: "OpenAI API key"
+      ANTHROPIC_API_KEY:
+        type: string
+        description: "Anthropic API key"
+      DEEPSEEK_API_KEY:
+        type: string
+        description: "DeepSeek API key"
+      MOONSHOT_API_KEY:
+        type: string
+        description: "Moonshot / Kimi API key"
+      ZHIPU_API_KEY:
+        type: string
+        description: "Zhipu AI (GLM) API key"
+      DASHSCOPE_API_KEY:
+        type: string
+        description: "Alibaba DashScope (Qwen) API key"
+      SILICONFLOW_API_KEY:
+        type: string
+        description: "SiliconFlow API key"
+      GROQ_API_KEY:
+        type: string
+        description: "Groq API key"
+      TOGETHER_API_KEY:
+        type: string
+        description: "Together AI API key"
+  commandFunction: |-
+    (config) => ({
+      "command": "npx",
+      "args": ["-y", "correctover-mcp-server"],
+      "env": {
+        "OPENAI_API_KEY": config.OPENAI_API_KEY || "",
+        "ANTHROPIC_API_KEY": config.ANTHROPIC_API_KEY || "",
+        "DEEPSEEK_API_KEY": config.DEEPSEEK_API_KEY || "",
+        "MOONSHOT_API_KEY": config.MOONSHOT_API_KEY || "",
+        "ZHIPU_API_KEY": config.ZHIPU_API_KEY || "",
+        "DASHSCOPE_API_KEY": config.DASHSCOPE_API_KEY || "",
+        "SILICONFLOW_API_KEY": config.SILICONFLOW_API_KEY || "",
+        "GROQ_API_KEY": config.GROQ_API_KEY || "",
+        "TOGETHER_API_KEY": config.TOGETHER_API_KEY || ""
+      }
+    })
