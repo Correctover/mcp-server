@@ -31,11 +31,20 @@ env:
   - name: OPENAI_API_KEY
     description: "OpenAI API key"
     required: false
+  - name: OPENAI_BASE_URL
+    description: "Override OpenAI base URL (for proxy/mirror)"
+    required: false
   - name: ANTHROPIC_API_KEY
     description: "Anthropic API key"
     required: false
+  - name: ANTHROPIC_BASE_URL
+    description: "Override Anthropic base URL (for proxy/mirror)"
+    required: false
   - name: DEEPSEEK_API_KEY
     description: "DeepSeek API key"
+    required: false
+  - name: DEEPSEEK_BASE_URL
+    description: "Override DeepSeek base URL (for proxy/mirror)"
     required: false
   - name: MOONSHOT_API_KEY
     description: "Moonshot API key"

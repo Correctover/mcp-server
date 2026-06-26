@@ -117,9 +117,38 @@ func (m *Manager) loadFromEnv() {
 		if key == "" {
 			continue
 		}
+		// Allow base URL override via environment variable (for proxy/mirror users)
+		// e.g. OPENAI_BASE_URL=https://your-proxy.com/v1
+		baseURL := def.baseURL
+		envBaseURLName := ""
+		switch def.name {
+		case "openai":
+			envBaseURLName = "OPENAI_BASE_URL"
+		case "anthropic":
+			envBaseURLName = "ANTHROPIC_BASE_URL"
+		case "deepseek":
+			envBaseURLName = "DEEPSEEK_BASE_URL"
+		case "moonshot":
+			envBaseURLName = "MOONSHOT_BASE_URL"
+		case "zhipu":
+			envBaseURLName = "ZHIPU_BASE_URL"
+		case "qwen":
+			envBaseURLName = "DASHSCOPE_BASE_URL"
+		case "siliconflow":
+			envBaseURLName = "SILICONFLOW_BASE_URL"
+		case "groq":
+			envBaseURLName = "GROQ_BASE_URL"
+		case "together":
+			envBaseURLName = "TOGETHER_BASE_URL"
+		}
+		if envBaseURLName != "" {
+			if envVal := os.Getenv(envBaseURLName); envVal != "" {
+				baseURL = envVal
+			}
+		}
 		m.providers[def.name] = &Provider{
 			Name:       def.name,
-			BaseURL:    def.baseURL,
+			BaseURL:    baseURL,
 			APIKey:     key,
 			Model:      def.model,
 			EnvKey:     def.envKey,

@@ -114,17 +114,19 @@ go build -o correctover-mcp-server .
 
 Configure providers via environment variables. Only configured providers are active.
 
-| Provider | Env Variable | Default Model |
-|----------|-------------|---------------|
-| OpenAI | `OPENAI_API_KEY` | gpt-4o-mini |
-| Anthropic | `ANTHROPIC_API_KEY` | claude-3-haiku-20240307 |
-| DeepSeek | `DEEPSEEK_API_KEY` | deepseek-chat |
-| Moonshot | `MOONSHOT_API_KEY` | moonshot-v1-8k |
-| Zhipu AI | `ZHIPU_API_KEY` | glm-4-flash |
-| Alibaba Qwen | `DASHSCOPE_API_KEY` | qwen-turbo |
-| SiliconFlow | `SILICONFLOW_API_KEY` | deepseek-ai/DeepSeek-V3 |
-| Groq | `GROQ_API_KEY` | llama-3.1-8b-instant |
-| Together AI | `TOGETHER_API_KEY` | meta-llama/Llama-3-8b-chat-hf |
+| Provider | API Key Env | Base URL Override | Default Model |
+|----------|------------|-------------------|---------------|
+| OpenAI | `OPENAI_API_KEY` | `OPENAI_BASE_URL` | gpt-4o-mini |
+| Anthropic | `ANTHROPIC_API_KEY` | `ANTHROPIC_BASE_URL` | claude-3-haiku-20240307 |
+| DeepSeek | `DEEPSEEK_API_KEY` | `DEEPSEEK_BASE_URL` | deepseek-chat |
+| Moonshot | `MOONSHOT_API_KEY` | `MOONSHOT_BASE_URL` | moonshot-v1-8k |
+| Zhipu AI | `ZHIPU_API_KEY` | `ZHIPU_BASE_URL` | glm-4-flash |
+| Alibaba Qwen | `DASHSCOPE_API_KEY` | `DASHSCOPE_BASE_URL` | qwen-turbo |
+| SiliconFlow | `SILICONFLOW_API_KEY` | `SILICONFLOW_BASE_URL` | deepseek-ai/DeepSeek-V3 |
+| Groq | `GROQ_API_KEY` | `GROQ_BASE_URL` | llama-3.1-8b-instant |
+| Together AI | `TOGETHER_API_KEY` | `TOGETHER_BASE_URL` | meta-llama/Llama-3-8b-chat-hf |
+
+> **Proxy/Mirror support:** Each provider's base URL can be overridden via `{PROVIDER}_BASE_URL` environment variable. Perfect for self-hosted proxies, API gateways, or regional mirrors (e.g. `OPENAI_BASE_URL=https://your-proxy.com/v1`).
 
 **BYOK (Bring Your Own Key):** Your API keys stay on your machine. Correctover connects directly to providers — no proxy, no middleman, no data leakage.
 
