@@ -36,3 +36,5 @@ dist/
 
 # Node
 node_modules/
+*.exe
+bin/
