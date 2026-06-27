@@ -1,0 +1,20 @@
+{
+  "name": "correctover-demo",
+  "version": "1.0.0",
+  "description": "Correctover Product Demo Video - Verified Failover",
+  "scripts": {
+    "start": "remotion studio",
+    "render": "remotion render CorrectoverDemo out/demo.mp4",
+    "render-prores": "remotion render CorrectoverDemo out/demo.mov --codec=prores"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.482",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "remotion": "^4.0.200"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "typescript": "^5.3.0"
+  }
+}

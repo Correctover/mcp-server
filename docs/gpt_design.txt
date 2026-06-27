@@ -1,0 +1,1607 @@
+```index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Correctover — Verified Failover for LLM Applications</title>
+  <meta name="description" content="Correctover is an LLM API reliability SDK with verified failover, contract validation, microsecond diagnosis, and self-healing runtime protection." />
+  <style>
+    :root{
+      --bg:#0A0A1A;
+      --bg2:#0f1130;
+      --panel:rgba(255,255,255,0.05);
+      --panel-2:rgba(255,255,255,0.08);
+      --text:#eef6ff;
+      --muted:#9fb0d1;
+      --cyan:#00E5FF;
+      --indigo:#6366F1;
+      --green:#34d399;
+      --yellow:#fbbf24;
+      --red:#fb7185;
+      --border:rgba(255,255,255,0.12);
+      --shadow:0 20px 60px rgba(0,0,0,0.45);
+      --radius:24px;
+      --max:1200px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(0,229,255,0.12), transparent 30%),
+        radial-gradient(circle at 80% 10%, rgba(99,102,241,0.14), transparent 32%),
+        radial-gradient(circle at 50% 80%, rgba(0,229,255,0.08), transparent 30%),
+        linear-gradient(180deg, #0A0A1A 0%, #0d1024 50%, #0A0A1A 100%);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size:40px 40px;
+      mask-image: radial-gradient(circle at center, black 35%, transparent 90%);
+      pointer-events:none;
+      z-index:0;
+    }
+
+    .particles{
+      position:fixed;
+      inset:0;
+      overflow:hidden;
+      pointer-events:none;
+      z-index:0;
+    }
+    .particle{
+      position:absolute;
+      width:4px;
+      height:4px;
+      border-radius:50%;
+      background:linear-gradient(135deg,var(--cyan),var(--indigo));
+      box-shadow:0 0 20px rgba(0,229,255,0.8);
+      opacity:.45;
+      animation:float linear infinite;
+    }
+    @keyframes float{
+      0%{transform:translateY(0) translateX(0) scale(1)}
+      50%{transform:translateY(-60px) translateX(20px) scale(1.4)}
+      100%{transform:translateY(-120px) translateX(-10px) scale(.8)}
+    }
+
+    .container{width:min(var(--max), calc(100% - 32px)); margin:0 auto; position:relative; z-index:1;}
+    .section{padding:96px 0}
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      color:var(--cyan);
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      font-size:.78rem;
+      font-weight:700;
+      margin-bottom:18px;
+    }
+    .eyebrow::before{
+      content:"";
+      width:34px;
+      height:1px;
+      background:linear-gradient(90deg,var(--cyan),transparent);
+    }
+
+    h1,h2,h3,p{margin:0}
+    h1{
+      font-size:clamp(2.6rem, 6vw, 5.5rem);
+      line-height:.98;
+      letter-spacing:-.04em;
+      max-width:900px;
+    }
+    h2{
+      font-size:clamp(2rem, 4vw, 3.3rem);
+      line-height:1.04;
+      letter-spacing:-.03em;
+      margin-bottom:16px;
+    }
+    .lead{
+      font-size:clamp(1.05rem, 2vw, 1.3rem);
+      line-height:1.7;
+      color:var(--muted);
+      max-width:760px;
+    }
+    .muted{color:var(--muted)}
+
+    .nav{
+      position:sticky;
+      top:0;
+      z-index:5;
+      backdrop-filter:blur(16px);
+      background:rgba(10,10,26,0.55);
+      border-bottom:1px solid rgba(255,255,255,0.06);
+    }
+    .nav-inner{
+      width:min(var(--max), calc(100% - 32px));
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:16px 0;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px; font-weight:800; letter-spacing:-.02em;
+    }
+    .brand-badge{
+      width:38px;height:38px;border-radius:12px;
+      background:linear-gradient(135deg,var(--cyan),var(--indigo));
+      box-shadow:0 0 30px rgba(0,229,255,.35);
+      position:relative;
+    }
+    .brand-badge::after{
+      content:"";
+      position:absolute; inset:8px;
+      border:2px solid rgba(255,255,255,.85);
+      border-radius:9px;
+    }
+    .nav-links{
+      display:flex; gap:22px; align-items:center; flex-wrap:wrap;
+    }
+    .nav-links a{
+      color:var(--muted); text-decoration:none; font-weight:600; font-size:.95rem;
+    }
+    .nav-links a:hover{color:var(--text)}
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      padding:14px 20px;
+      border-radius:16px;
+      text-decoration:none;
+      font-weight:800;
+      border:1px solid var(--border);
+      transition:.25s ease;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .btn-primary{
+      color:#001018;
+      background:linear-gradient(135deg,var(--cyan),#7ef9ff 40%, var(--indigo));
+      box-shadow:0 10px 35px rgba(0,229,255,.28);
+    }
+    .btn-primary:hover{transform:translateY(-2px); box-shadow:0 18px 45px rgba(0,229,255,.35)}
+    .btn-secondary{
+      color:var(--text);
+      background:rgba(255,255,255,.04);
+    }
+    .btn-secondary:hover{background:rgba(255,255,255,.08)}
+
+    .hero{
+      padding:84px 0 48px;
+      min-height:calc(100vh - 72px);
+      display:flex;
+      align-items:center;
+    }
+    .hero-grid{
+      display:grid;
+      grid-template-columns:1.2fr .8fr;
+      gap:32px;
+      align-items:center;
+    }
+    .hero-copy .gradient{
+      background:linear-gradient(135deg,#fff,var(--cyan) 45%, #b7c0ff 90%);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+    .hero-actions{
+      display:flex; gap:14px; flex-wrap:wrap; margin-top:28px;
+    }
+    .install-chip{
+      margin-top:24px;
+      display:inline-flex;
+      align-items:center;
+      gap:12px;
+      background:rgba(255,255,255,.05);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:14px 16px;
+      color:#dffcff;
+      box-shadow:var(--shadow);
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      font-size:.98rem;
+    }
+    .install-chip .dot{
+      width:10px;height:10px;border-radius:50%; background:var(--green);
+      box-shadow:0 0 16px rgba(52,211,153,.8);
+    }
+
+    .hero-panel{
+      position:relative;
+      padding:24px;
+      border-radius:28px;
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .hero-panel::before{
+      content:"";
+      position:absolute; inset:-1px;
+      background:linear-gradient(135deg, rgba(0,229,255,.25), transparent 30%, transparent 70%, rgba(99,102,241,.28));
+      z-index:0;
+      pointer-events:none;
+    }
+    .panel-inner{position:relative; z-index:1}
+    .mini-terminal{
+      background:#070b18;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:20px;
+      overflow:hidden;
+    }
+    .terminal-head{
+      display:flex; align-items:center; gap:8px;
+      padding:12px 14px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      background:rgba(255,255,255,.03);
+    }
+    .terminal-head span{
+      width:10px;height:10px;border-radius:50%;
+      display:inline-block;
+    }
+    .terminal-head span:nth-child(1){background:#fb7185}
+    .terminal-head span:nth-child(2){background:#fbbf24}
+    .terminal-head span:nth-child(3){background:#34d399}
+    .terminal-body{
+      padding:18px;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      color:#d7e9ff;
+      line-height:1.85;
+      font-size:.95rem;
+    }
+    .terminal-accent{color:var(--cyan)}
+    .terminal-ok{color:#86efac}
+    .terminal-num{color:#c4b5fd}
+
+    .stats-strip{
+      margin-top:18px;
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:14px;
+    }
+    .stat-pill{
+      padding:16px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;
+    }
+    .stat-pill b{
+      display:block;
+      font-size:1.25rem;
+      margin-bottom:4px;
+      color:var(--cyan);
+    }
+    .stat-pill span{color:var(--muted); font-size:.9rem}
+
+    .problem-grid, .validation-grid, .pricing-grid, .footer-grid{
+      display:grid;
+      gap:20px;
+    }
+    .problem-grid{grid-template-columns:repeat(4,1fr); margin-top:34px}
+    .validation-grid{grid-template-columns:repeat(3,1fr); margin-top:34px}
+    .pricing-grid{grid-template-columns:repeat(4,1fr); margin-top:34px}
+    .footer-grid{
+      grid-template-columns:1.2fr .8fr .8fr .8fr;
+      padding:40px 0 60px;
+      border-top:1px solid rgba(255,255,255,.08);
+    }
+
+    .card{
+      position:relative;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:24px;
+      padding:24px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card::after{
+      content:"";
+      position:absolute;
+      inset:auto -20% -60% auto;
+      width:180px; height:180px;
+      background:radial-gradient(circle, rgba(0,229,255,.18), transparent 65%);
+      pointer-events:none;
+    }
+    .problem-card{
+      min-height:240px;
+      transform:translateY(16px);
+      opacity:0;
+      transition:.7s ease;
+    }
+    .problem-card.visible{transform:translateY(0); opacity:1}
+    .problem-icon{
+      width:52px;height:52px;border-radius:16px;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg, rgba(0,229,255,.18), rgba(99,102,241,.18));
+      border:1px solid rgba(255,255,255,.1);
+      margin-bottom:18px;
+      font-size:1.45rem;
+    }
+    .problem-card h3, .validation-card h3, .price-card h3{font-size:1.2rem; margin-bottom:10px}
+    .problem-card p, .validation-card p, .price-card p{color:var(--muted); line-height:1.7}
+
+    .validation-card{
+      min-height:200px;
+      transition:.25s ease;
+    }
+    .validation-card:hover{transform:translateY(-6px)}
+    .check{
+      width:28px;height:28px;border-radius:50%;
+      margin-bottom:14px;
+      position:relative;
+      border:1px solid rgba(0,229,255,.35);
+      background:rgba(0,229,255,.08);
+      box-shadow:0 0 20px rgba(0,229,255,.15);
+    }
+    .check::after{
+      content:"";
+      position:absolute;
+      left:7px; top:6px;
+      width:11px; height:6px;
+      border-left:2px solid var(--cyan);
+      border-bottom:2px solid var(--cyan);
+      transform:rotate(-45deg) scale(0);
+      transform-origin:center;
+      animation:checkIn 1.6s ease infinite;
+    }
+    @keyframes checkIn{
+      0%,20%{transform:rotate(-45deg) scale(0)}
+      30%,80%{transform:rotate(-45deg) scale(1)}
+      100%{transform:rotate(-45deg) scale(0)}
+    }
+
+    .benchmark-wrap{
+      margin-top:34px;
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:20px;
+    }
+    .metric{
+      text-align:left;
+      padding:24px;
+      min-height:180px;
+    }
+    .metric .label{
+      color:var(--muted);
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      font-size:.78rem;
+      margin-bottom:18px;
+      display:block;
+    }
+    .metric .value{
+      font-size:clamp(2rem,4vw,3.6rem);
+      font-weight:900;
+      letter-spacing:-.04em;
+      line-height:1;
+      background:linear-gradient(135deg,#fff,var(--cyan),#b9bdfd);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+    .metric .suffix{
+      color:var(--text);
+      font-size:1rem;
+      font-weight:800;
+      margin-left:4px;
+    }
+    .metric p{margin-top:12px; color:var(--muted)}
+
+    .arch{
+      margin-top:34px;
+      padding:28px;
+    }
+    .flow{
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:16px;
+      align-items:center;
+    }
+    .node{
+      position:relative;
+      padding:24px 16px;
+      text-align:center;
+      border-radius:22px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      min-height:140px;
+      display:flex; flex-direction:column; justify-content:center; align-items:center;
+    }
+    .node .circle{
+      width:52px;height:52px;border-radius:50%;
+      background:linear-gradient(135deg,var(--cyan),var(--indigo));
+      display:grid; place-items:center;
+      color:#02131a; font-weight:900; margin-bottom:14px;
+      box-shadow:0 10px 30px rgba(0,229,255,.25);
+    }
+    .node h3{font-size:1.05rem; margin-bottom:6px}
+    .node p{font-size:.92rem; color:var(--muted)}
+    .arrow{
+      position:absolute; right:-17px; top:50%; transform:translateY(-50%);
+      width:34px;height:2px; background:linear-gradient(90deg,var(--cyan),var(--indigo));
+    }
+    .arrow::after{
+      content:"";
+      position:absolute; right:0; top:50%; transform:translateY(-50%) rotate(45deg);
+      width:10px;height:10px;
+      border-top:2px solid var(--indigo);
+      border-right:2px solid var(--indigo);
+    }
+    .knowledge-ring{
+      margin-top:26px;
+      padding:18px 20px;
+      border-radius:20px;
+      background:rgba(99,102,241,.08);
+      border:1px solid rgba(99,102,241,.2);
+      color:#cfd5ff;
+      text-align:center;
+      font-weight:600;
+    }
+
+    .price-card{
+      min-height:420px;
+      display:flex;
+      flex-direction:column;
+    }
+    .price-card.featured{
+      transform:translateY(-8px);
+      border-color:rgba(0,229,255,.35);
+      box-shadow:0 20px 60px rgba(0,229,255,.14);
+    }
+    .plan{
+      display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;
+    }
+    .badge{
+      padding:8px 12px; border-radius:999px; font-size:.75rem; font-weight:800;
+      color:#001018; background:linear-gradient(135deg,var(--cyan),#c8f8ff);
+    }
+    .price{
+      font-size:2.5rem; font-weight:900; letter-spacing:-.04em; margin:10px 0 16px;
+    }
+    .price small{font-size:1rem; color:var(--muted); font-weight:700}
+    .features{
+      display:grid; gap:10px; margin:18px 0 24px; color:#dbe6ff;
+    }
+    .features div{display:flex; gap:10px; align-items:flex-start}
+    .tick{color:var(--cyan); font-weight:900}
+    .price-card .btn{margin-top:auto}
+
+    .cta-box{
+      padding:40px;
+      border-radius:32px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(0,229,255,.18), transparent 30%),
+        radial-gradient(circle at 80% 70%, rgba(99,102,241,.24), transparent 32%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:var(--shadow);
+      text-align:center;
+    }
+    .cta-box p{max-width:720px; margin:14px auto 0; color:var(--muted); line-height:1.7}
+    .cta-actions{display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin-top:28px}
+
+    footer{position:relative; z-index:1}
+    footer h4{margin-bottom:14px}
+    footer a{
+      color:var(--muted);
+      text-decoration:none;
+      display:block;
+      margin:8px 0;
+    }
+    footer a:hover{color:var(--cyan)}
+
+    .reveal{opacity:0; transform:translateY(20px); transition:.7s ease}
+    .reveal.visible{opacity:1; transform:translateY(0)}
+
+    @media (max-width: 1100px){
+      .hero-grid, .problem-grid, .validation-grid, .benchmark-wrap, .pricing-grid, .footer-grid, .flow{
+        grid-template-columns:repeat(2,1fr);
+      }
+      .flow .node:nth-child(2n) .arrow{display:none}
+    }
+    @media (max-width: 760px){
+      .nav-links a:not(.nav-cta){display:none}
+      .hero{padding-top:52px}
+      .hero-grid, .problem-grid, .validation-grid, .benchmark-wrap, .pricing-grid, .footer-grid, .flow{
+        grid-template-columns:1fr;
+      }
+      .flow .arrow{display:none}
+      .cta-box{padding:28px}
+      .section{padding:72px 0}
+    }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="brand">
+        <div class="brand-badge"></div>
+        <span>Correctover</span>
+      </div>
+      <div class="nav-links">
+        <a href="#problem">Problem</a>
+        <a href="#solution">Solution</a>
+        <a href="#benchmark">Benchmark</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#pricing">Pricing</a>
+        <a href="console.html" class="btn btn-secondary nav-cta">Open Console</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy reveal visible">
+          <div class="eyebrow">LLM Reliability SDK</div>
+          <h1><span class="gradient">Verified Failover</span> for LLM Applications</h1>
+          <p class="lead" style="margin-top:20px;">
+            Correctover validates every response contract before your application trusts it—schema, meaning, latency, cost, integrity, and identity—then self-heals in microseconds with zero network overhead.
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#pricing">pip install correctover</a>
+            <a class="btn btn-secondary" href="console.html">View Live Benchmarks</a>
+          </div>
+
+          <div class="install-chip">
+            <span class="dot"></span>
+            <span>$ pip install correctover</span>
+          </div>
+        </div>
+
+        <div class="hero-panel reveal visible">
+          <div class="panel-inner">
+            <div class="mini-terminal">
+              <div class="terminal-head"><span></span><span></span><span></span></div>
+              <div class="terminal-body">
+                <div><span class="terminal-accent">from</span> correctover <span class="terminal-accent">import</span> Guard</div>
+                <div><span class="terminal-ok">guard</span> = Guard(<span class="terminal-num">verified_failover=True</span>)</div>
+                <div>response = <span class="terminal-ok">guard</span>.call(<span class="terminal-num">llm_request</span>)</div>
+                <br />
+                <div>✔ Schema Validation</div>
+                <div>✔ Semantic Equivalence</div>
+                <div>✔ Latency Compliance</div>
+                <div>✔ Cost Guardrails</div>
+                <div>✔ Content Integrity</div>
+                <div>✔ Identity Verification</div>
+              </div>
+            </div>
+
+            <div class="stats-strip">
+              <div class="stat-pill">
+                <b>22µs</b>
+                <span>P50 diagnosis latency</span>
+              </div>
+              <div class="stat-pill">
+                <b>0.4µs</b>
+                <span>Circuit breaker P50</span>
+              </div>
+              <div class="stat-pill">
+                <b>177,582</b>
+                <span>Telemetry rec/s</span>
+              </div>
+              <div class="stat-pill">
+                <b>~375 KB</b>
+                <span>SDK footprint</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="problem">
+      <div class="container">
+        <div class="eyebrow reveal">Reliability Gap</div>
+        <h2 class="reveal">HTTP 200 Is Not Enough</h2>
+        <p class="lead reveal">
+          Your provider can return success while the application still fails. Correctover catches the hidden failures standard retries and status-code checks miss.
+        </p>
+
+        <div class="problem-grid">
+          <div class="card problem-card reveal">
+            <div class="problem-icon">≠</div>
+            <h3>Semantically Wrong</h3>
+            <p>The response parses, but the meaning drifts from user intent or expected behavior.</p>
+          </div>
+          <div class="card problem-card reveal">
+            <div class="problem-icon">⏱</div>
+            <h3>Too Slow to Use</h3>
+            <p>A valid answer arriving after your latency budget is still an application failure.</p>
+          </div>
+          <div class="card problem-card reveal">
+            <div class="problem-icon">$</div>
+            <h3>Cost Blowouts</h3>
+            <p>Token spikes and provider variance silently break unit economics without tripping transport errors.</p>
+          </div>
+          <div class="card problem-card reveal">
+            <div class="problem-icon">⚠</div>
+            <h3>Unsafe or Untrusted</h3>
+            <p>Content integrity violations, identity mismatch, or malformed output can poison downstream systems.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="solution">
+      <div class="container">
+        <div class="eyebrow reveal">Contract Validation</div>
+        <h2 class="reveal">Six Dimensions. One Verified Decision.</h2>
+        <p class="lead reveal">
+          Correctover evaluates every LLM response against a multidimensional contract before it reaches production logic.
+        </p>
+
+        <div class="validation-grid">
+          <div class="card validation-card reveal">
+            <div class="check"></div>
+            <h3>Schema Validation</h3>
+            <p>Ensure structure, types, and required fields are exactly what your application expects.</p>
+          </div>
+          <div class="card validation-card reveal">
+            <div class="check"></div>
+            <h3>Semantic Equivalence</h3>
+            <p>Verify the response preserves intended meaning, not just syntactic correctness.</p>
+          </div>
+          <div class="card validation-card reveal">
+            <div class="check"></div>
+            <h3>Latency Compliance</h3>
+            <p>Reject responses that arrive outside your operational SLOs even when transport succeeds.</p>
+          </div>
+          <div class="card validation-card reveal">
+            <div class="check"></div>
+            <h3>Cost Guardrails</h3>
+            <p>Enforce budget-aware execution with token and spend boundaries built into runtime validation.</p>
+          </div>
+          <div class="card validation-card reveal">
+            <div class="check"></div>
+            <h3>Content Integrity</h3>
+            <p>Protect against partial corruption, unsafe content, and output drift that breaks downstream trust.</p>
+          </div>
+          <div class="card validation-card reveal">
+            <div class="check"></div>
+            <h3>Identity Verification</h3>
+            <p>Validate provenance and policy assumptions before responses are accepted as authoritative.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="benchmark">
+      <div class="container">
+        <div class="eyebrow reveal">Benchmarked Performance</div>
+        <h2 class="reveal">Microsecond Diagnosis. Production-Grade Throughput.</h2>
+        <p class="lead reveal">
+          Measured across 1M samples for diagnosis and circuit breaking, with high-throughput telemetry designed for in-process observability.
+        </p>
+
+        <div class="benchmark-wrap">
+          <div class="card metric reveal" data-target="22" data-decimals="0">
+            <span class="label">Diagnosis P50</span>
+            <div><span class="value">0</span><span class="suffix">µs</span></div>
+            <p>Median diagnosis latency</p>
+          </div>
+          <div class="card metric reveal" data-target="47" data-decimals="0">
+            <span class="label">Diagnosis P99</span>
+            <div><span class="value">0</span><span class="suffix">µs</span></div>
+            <p>Tail latency at scale</p>
+          </div>
+          <div class="card metric reveal" data-target="0.4" data-decimals="1">
+            <span class="label">Circuit Breaker P50</span>
+            <div><span class="value">0</span><span class="suffix">µs</span></div>
+            <p>Fast-path failover decision</p>
+          </div>
+          <div class="card metric reveal" data-target="177582" data-decimals="0">
+            <span class="label">Telemetry Throughput</span>
+            <div><span class="value">0</span><span class="suffix">rec/s</span></div>
+            <p>Single-thread measured throughput</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="architecture">
+      <div class="container">
+        <div class="eyebrow reveal">MAPE-K Self-Healing</div>
+        <h2 class="reveal">In-Process Reliability Loop</h2>
+        <p class="lead reveal">
+          Correctover continuously observes behavior, diagnoses faults, plans recovery, and executes verified failover using a knowledge-backed control loop.
+        </p>
+
+        <div class="card arch reveal">
+          <div class="flow">
+            <div class="node">
+              <div class="circle">M</div>
+              <h3>Monitor</h3>
+              <p>Capture response, timing, cost, and telemetry.</p>
+              <div class="arrow"></div>
+            </div>
+            <div class="node">
+              <div class="circle">A</div>
+              <h3>Analyze</h3>
+              <p>Run six-dimension contract validation in microseconds.</p>
+              <div class="arrow"></div>
+            </div>
+            <div class="node">
+              <div class="circle">P</div>
+              <h3>Plan</h3>
+              <p>Select retry, failover, degrade, or short-circuit action.</p>
+              <div class="arrow"></div>
+            </div>
+            <div class="node">
+              <div class="circle">E</div>
+              <h3>Execute</h3>
+              <p>Apply the chosen recovery path with verified safety checks.</p>
+              <div class="arrow"></div>
+            </div>
+            <div class="node">
+              <div class="circle">K</div>
+              <h3>Knowledge</h3>
+              <p>Retain fault patterns, contracts, and adaptive policies.</p>
+            </div>
+          </div>
+          <div class="knowledge-ring">Verified across 70,000 fault injections spanning 7 fault types.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="pricing">
+      <div class="container">
+        <div class="eyebrow reveal">Pricing</div>
+        <h2 class="reveal">Start Free. Scale to Mission-Critical.</h2>
+        <p class="lead reveal">
+          Lightweight enough for experimentation, rigorous enough for enterprise-grade LLM reliability.
+        </p>
+
+        <div class="pricing-grid">
+          <div class="card price-card reveal">
+            <div class="plan">
+              <h3>Trial</h3>
+              <span class="badge">Free</span>
+            </div>
+            <div class="price">$0 <small>/ forever</small></div>
+            <p>Evaluate verified failover locally with core validation and developer tooling.</p>
+            <div class="features">
+              <div><span class="tick">✓</span><span>One-line install</span></div>
+              <div><span class="tick">✓</span><span>Core contract validation</span></div>
+              <div><span class="tick">✓</span><span>Local development usage</span></div>
+              <div><span class="tick">✓</span><span>Community support</span></div>
+            </div>
+            <a href="#" class="btn btn-secondary">Get Started</a>
+          </div>
+
+          <div class="card price-card featured reveal">
+            <div class="plan">
+              <h3>Pro</h3>
+              <span class="badge">Popular</span>
+            </div>
+            <div class="price">$99 <small>/ mo</small></div>
+            <p>For teams shipping production pilots and early customer-facing LLM workflows.</p>
+            <div class="features">
+              <div><span class="tick">✓</span><span>All Trial features</span></div>
+              <div><span class="tick">✓</span><span>Telemetry + benchmark tooling</span></div>
+              <div><span class="tick">✓</span><span>Advanced failover policies</span></div>
+              <div><span class="tick">✓</span><span>Email support</span></div>
+            </div>
+            <a href="#" class="btn btn-primary">Start Pro</a>
+          </div>
+
+          <div class="card price-card reveal">
+            <div class="plan">
+              <h3>Professional</h3>
+              <span class="badge">Teams</span>
+            </div>
+            <div class="price">$499 <small>/ mo</small></div>
+            <p>For serious production systems requiring stronger controls, observability, and deployment confidence.</p>
+            <div class="features">
+              <div><span class="tick">✓</span><span>All Pro features</span></div>
+              <div><span class="tick">✓</span><span>Policy customization</span></div>
+              <div><span class="tick">✓</span><span>Priority support</span></div>
+              <div><span class="tick">✓</span><span>Team onboarding</span></div>
+            </div>
+            <a href="#" class="btn btn-secondary">Contact Sales</a>
+          </div>
+
+          <div class="card price-card reveal">
+            <div class="plan">
+              <h3>Enterprise</h3>
+              <span class="badge">Custom</span>
+            </div>
+            <div class="price">Custom</div>
+            <p>For high-scale, regulated, or mission-critical AI platforms needing tailored governance and support.</p>
+            <div class="features">
+              <div><span class="tick">✓</span><span>Custom validation policies</span></div>
+              <div><span class="tick">✓</span><span>Design reviews + architecture support</span></div>
+              <div><span class="tick">✓</span><span>SLA / procurement workflows</span></div>
+              <div><span class="tick">✓</span><span>Dedicated support channel</span></div>
+            </div>
+            <a href="#" class="btn btn-secondary">Talk to Us</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="cta-box reveal">
+          <div class="eyebrow" style="justify-content:center;">Ship Safer LLM Systems</div>
+          <h2>Install in one line. Validate in microseconds.</h2>
+          <p>
+            Zero network overhead. In-process SDK. Roughly 375 KB. One dependency. Designed for reliability teams who need proof—not hope.
+          </p>
+          <div class="cta-actions">
+            <a href="#" class="btn btn-primary">pip install correctover</a>
+            <a href="console.html" class="btn btn-secondary">Open Real Data Dashboard</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-grid">
+      <div>
+        <div class="brand" style="margin-bottom:12px;">
+          <div class="brand-badge"></div>
+          <span>Correctover</span>
+        </div>
+        <p class="muted" style="max-width:360px; line-height:1.7;">
+          Verified failover and contract validation for LLM applications. Built for fast diagnosis, safe recovery, and trustworthy AI runtime behavior.
+        </p>
+      </div>
+      <div>
+        <h4>Product</h4>
+        <a href="#solution">Validation</a>
+        <a href="#benchmark">Benchmarks</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#pricing">Pricing</a>
+      </div>
+      <div>
+        <h4>Links</h4>
+        <a href="#">Docs</a>
+        <a href="#">GitHub</a>
+        <a href="#">PyPI</a>
+        <a href="console.html">Console</a>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <a href="mailto:hello@correctover.com">hello@correctover.com</a>
+        <a href="#">Support</a>
+        <a href="#">Security</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const particles = document.getElementById('particles');
+    for(let i=0;i<34;i++){
+      const p=document.createElement('div');
+      p.className='particle';
+      const size=Math.random()*4+2;
+      p.style.width=size+'px';
+      p.style.height=size+'px';
+      p.style.left=Math.random()*100+'%';
+      p.style.top=(Math.random()*100+10)+'%';
+      p.style.animationDuration=(8+Math.random()*10)+'s';
+      p.style.animationDelay=(-Math.random()*10)+'s';
+      p.style.opacity=(0.18+Math.random()*0.45);
+      particles.appendChild(p);
+    }
+
+    const revealEls = document.querySelectorAll('.reveal');
+    const metricEls = document.querySelectorAll('.metric');
+    let metricsAnimated = false;
+
+    const obs = new IntersectionObserver((entries)=>{
+      entries.forEach(entry=>{
+        if(entry.isIntersecting){
+          entry.target.classList.add('visible');
+
+          if(entry.target.classList.contains('problem-card')){
+            entry.target.classList.add('visible');
+          }
+
+          if(entry.target.classList.contains('metric') && !metricsAnimated){
+            animateMetrics();
+            metricsAnimated = true;
+          }
+        }
+      });
+    }, {threshold:0.18});
+
+    revealEls.forEach(el=>obs.observe(el));
+
+    function animateValue(el, end, decimals, duration=1600){
+      const start = 0;
+      const startTime = performance.now();
+      function tick(now){
+        const progress = Math.min((now-startTime)/duration,1);
+        const eased = 1 - Math.pow(1-progress,3);
+        const val = start + (end-start)*eased;
+        el.textContent = decimals > 0
+          ? val.toFixed(decimals)
+          : Math.round(val).toLocaleString();
+        if(progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    function animateMetrics(){
+      metricEls.forEach((metric, i)=>{
+        const valueEl = metric.querySelector('.value');
+        const target = parseFloat(metric.dataset.target);
+        const decimals = parseInt(metric.dataset.decimals || '0', 10);
+        setTimeout(()=>animateValue(valueEl, target, decimals, 1500), i*140);
+      });
+    }
+  </script>
+</body>
+</html>
+```
+
+```console.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Correctover Console — Real Data Dashboard</title>
+  <meta name="description" content="Live Correctover SDK dashboard with real benchmark metrics, telemetry throughput, fault injection verification, and system status." />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <style>
+    :root{
+      --bg:#0A0A1A;
+      --bg-soft:#10132d;
+      --panel:rgba(255,255,255,.05);
+      --panel-2:rgba(255,255,255,.08);
+      --text:#f3f7ff;
+      --muted:#9fb0d1;
+      --cyan:#00E5FF;
+      --indigo:#6366F1;
+      --green:#34d399;
+      --yellow:#fbbf24;
+      --red:#fb7185;
+      --border:rgba(255,255,255,.1);
+      --shadow:0 18px 60px rgba(0,0,0,.42);
+      --radius:24px;
+      --max:1320px;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(0,229,255,.12), transparent 28%),
+        radial-gradient(circle at 90% 0%, rgba(99,102,241,.16), transparent 30%),
+        linear-gradient(180deg, #0A0A1A 0%, #0d1024 55%, #0A0A1A 100%);
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size:32px 32px;
+      mask-image: radial-gradient(circle at center, black 35%, transparent 90%);
+      pointer-events:none;
+    }
+
+    .container{width:min(var(--max), calc(100% - 28px)); margin:0 auto; position:relative; z-index:1;}
+    .topbar{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter:blur(16px);
+      background:rgba(10,10,26,.62);
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .topbar-inner{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:16px 0;
+      gap:20px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      font-weight:800; letter-spacing:-.02em;
+    }
+    .logo{
+      width:40px; height:40px; border-radius:14px;
+      background:linear-gradient(135deg,var(--cyan),var(--indigo));
+      box-shadow:0 0 30px rgba(0,229,255,.28);
+      position:relative;
+    }
+    .logo::after{
+      content:"";
+      position:absolute; inset:8px;
+      border-radius:10px;
+      border:2px solid rgba(255,255,255,.85);
+    }
+    .actions{display:flex; gap:12px; flex-wrap:wrap}
+    .btn{
+      display:inline-flex; align-items:center; gap:10px;
+      padding:12px 16px; border-radius:16px;
+      text-decoration:none; font-weight:800;
+      border:1px solid var(--border);
+      transition:.25s ease;
+      white-space:nowrap;
+    }
+    .btn-primary{
+      color:#001018;
+      background:linear-gradient(135deg,var(--cyan),#aaf8ff 40%,var(--indigo));
+      box-shadow:0 12px 35px rgba(0,229,255,.25);
+    }
+    .btn-secondary{
+      color:var(--text);
+      background:rgba(255,255,255,.04);
+    }
+    .btn:hover{transform:translateY(-2px)}
+
+    .hero{
+      padding:38px 0 26px;
+    }
+    .hero-grid{
+      display:grid;
+      grid-template-columns:1.2fr .8fr;
+      gap:22px;
+      align-items:stretch;
+    }
+    .panel{
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.035));
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:28px;
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .panel::before{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(0,229,255,.12), transparent 24%),
+        radial-gradient(circle at 90% 80%, rgba(99,102,241,.16), transparent 26%);
+      pointer-events:none;
+    }
+    .panel-inner{position:relative; z-index:1; padding:28px}
+    .eyebrow{
+      display:inline-flex; align-items:center; gap:10px;
+      text-transform:uppercase; letter-spacing:.12em;
+      color:var(--cyan); font-size:.75rem; font-weight:800;
+      margin-bottom:14px;
+    }
+    .eyebrow::before{
+      content:""; width:28px; height:1px;
+      background:linear-gradient(90deg,var(--cyan),transparent);
+    }
+    h1,h2,h3,p{margin:0}
+    h1{
+      font-size:clamp(2rem,4vw,3.4rem);
+      line-height:1.02;
+      letter-spacing:-.04em;
+      margin-bottom:14px;
+    }
+    .lead{
+      color:var(--muted);
+      line-height:1.75;
+      max-width:720px;
+    }
+
+    .status-card{
+      display:flex; flex-direction:column; justify-content:space-between;
+      min-height:100%;
+    }
+    .status-row{
+      display:flex; align-items:center; justify-content:space-between; gap:18px;
+      margin-bottom:22px;
+    }
+    .online{
+      display:inline-flex; align-items:center; gap:10px;
+      padding:10px 14px; border-radius:999px;
+      background:rgba(52,211,153,.12);
+      border:1px solid rgba(52,211,153,.28);
+      color:#b7f7da; font-weight:800;
+    }
+    .pulse{
+      width:10px; height:10px; border-radius:50%;
+      background:var(--green); box-shadow:0 0 0 0 rgba(52,211,153,.6);
+      animation:pulse 1.8s infinite;
+    }
+    @keyframes pulse{
+      0%{box-shadow:0 0 0 0 rgba(52,211,153,.55)}
+      70%{box-shadow:0 0 0 12px rgba(52,211,153,0)}
+      100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}
+    }
+    .latency-block{
+      margin-top:10px;
+    }
+    .latency-head{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:10px;
+      color:var(--muted); font-weight:700;
+    }
+    .bar{
+      height:16px; border-radius:999px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      overflow:hidden;
+      position:relative;
+    }
+    .bar-fill{
+      height:100%;
+      width:94%;
+      background:linear-gradient(90deg,var(--green),var(--cyan),var(--indigo));
+      box-shadow:0 0 24px rgba(0,229,255,.3);
+      position:relative;
+    }
+    .bar-fill::after{
+      content:"";
+      position:absolute; inset:0;
+      background:linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+      animation:scan 2.4s linear infinite;
+    }
+    @keyframes scan{
+      0%{transform:translateX(-100%)}
+      100%{transform:translateX(100%)}
+    }
+
+    .dashboard{
+      padding:10px 0 60px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(12,1fr);
+      gap:18px;
+    }
+    .span-3{grid-column:span 3}
+    .span-4{grid-column:span 4}
+    .span-6{grid-column:span 6}
+    .span-8{grid-column:span 8}
+    .span-12{grid-column:span 12}
+
+    .metric-card{
+      min-height:170px;
+    }
+    .metric-head{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
+      margin-bottom:20px;
+    }
+    .metric-icon{
+      width:54px;height:54px;border-radius:18px;
+      display:grid; place-items:center;
+      background:linear-gradient(135deg, rgba(0,229,255,.18), rgba(99,102,241,.18));
+      border:1px solid rgba(255,255,255,.1);
+      color:var(--cyan);
+      font-size:1.2rem;
+      box-shadow:0 12px 28px rgba(0,229,255,.12);
+    }
+    .metric-title{
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.1em;
+      font-size:.75rem;
+      font-weight:800;
+    }
+    .metric-value{
+      margin-top:8px;
+      font-size:clamp(2rem,4vw,3.2rem);
+      font-weight:900;
+      letter-spacing:-.04em;
+      line-height:1;
+      background:linear-gradient(135deg,#fff,var(--cyan),#c6c8ff);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+    .metric-note{
+      margin-top:12px; color:var(--muted); line-height:1.65;
+      font-size:.95rem;
+    }
+
+    .list{
+      display:grid; gap:12px; margin-top:14px;
+    }
+    .list-item{
+      display:flex; align-items:center; justify-content:space-between; gap:16px;
+      padding:14px 16px;
+      background:rgba(255,255,255,.035);
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:16px;
+    }
+    .list-item .left{
+      display:flex; align-items:center; gap:12px; color:#dce8ff;
+      font-weight:700;
+    }
+    .list-item .right{
+      color:var(--cyan); font-weight:900;
+    }
+
+    .mini-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:14px; margin-top:10px;
+    }
+    .mini{
+      padding:18px;
+      border-radius:18px;
+      background:rgba(255,255,255,.035);
+      border:1px solid rgba(255,255,255,.07);
+    }
+    .mini .k{
+      color:var(--muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.08em; font-weight:800;
+      margin-bottom:8px;
+    }
+    .mini .v{
+      font-size:1.55rem; font-weight:900; color:var(--text);
+    }
+
+    .chart{
+      margin-top:18px;
+      height:220px;
+      border-radius:20px;
+      border:1px solid rgba(255,255,255,.08);
+      background:
+        linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      background-size:100% 44px, 56px 100%, 100% 100%;
+      position:relative;
+      overflow:hidden;
+    }
+    .chart svg{
+      position:absolute; inset:0; width:100%; height:100%;
+    }
+    .chart-labels{
+      display:flex; justify-content:space-between; color:var(--muted);
+      font-size:.8rem; margin-top:10px;
+    }
+
+    .footer-note{
+      padding:8px 0 36px;
+      color:var(--muted);
+      text-align:center;
+      font-size:.92rem;
+    }
+
+    @media (max-width: 1100px){
+      .hero-grid{grid-template-columns:1fr}
+      .span-3,.span-4,.span-6,.span-8{grid-column:span 6}
+      .mini-grid{grid-template-columns:1fr 1fr 1fr}
+    }
+    @media (max-width: 760px){
+      .topbar-inner{flex-direction:column; align-items:flex-start}
+      .actions{width:100%}
+      .actions a{flex:1}
+      .span-3,.span-4,.span-6,.span-8,.span-12{grid-column:span 12}
+      .mini-grid{grid-template-columns:1fr}
+      .panel-inner{padding:22px}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <div style="font-size:1.05rem;">Correctover Console</div>
+          <div style="color:var(--muted); font-size:.9rem; font-weight:600;">Real Data Dashboard</div>
+        </div>
+      </div>
+      <div class="actions">
+        <a href="index.html" class="btn btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back to Site</a>
+        <a href="#" class="btn btn-primary"><i class="fa-solid fa-terminal"></i> pip install correctover</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="panel">
+        <div class="panel-inner">
+          <div class="eyebrow">Verified Failover Telemetry</div>
+          <h1>Production Benchmarks, Live Presentation</h1>
+          <p class="lead">
+            This console visualizes the measured runtime characteristics of the Correctover SDK: diagnosis latency, circuit breaker speed, telemetry throughput, package footprint, adoption signals, and fault-injection verification coverage.
+          </p>
+
+          <div class="mini-grid">
+            <div class="mini">
+              <div class="k">SDK Size</div>
+              <div class="v">~375 KB</div>
+            </div>
+            <div class="mini">
+              <div class="k">Dependency Count</div>
+              <div class="v">1 <span style="color:var(--muted); font-size:1rem;">(httpx)</span></div>
+            </div>
+            <div class="mini">
+              <div class="k">Network Overhead</div>
+              <div class="v">Zero</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel status-card">
+        <div class="panel-inner">
+          <div class="status-row">
+            <div>
+              <div class="eyebrow">System Status</div>
+              <h2 style="font-size:1.8rem;">Online</h2>
+            </div>
+            <div class="online"><span class="pulse"></span> Operational</div>
+          </div>
+
+          <p class="lead" style="font-size:1rem;">
+            In-process decisioning active. Latency budget healthy. Benchmark profile stable.
+          </p>
+
+          <div class="latency-block">
+            <div class="latency-head">
+              <span>Status Latency Bar</span>
+              <strong style="color:var(--cyan)">94 / 100</strong>
+            </div>
+            <div class="bar">
+              <div class="bar-fill"></div>
+            </div>
+          </div>
+
+          <div class="list" style="margin-top:18px;">
+            <div class="list-item">
+              <div class="left"><i class="fa-solid fa-shield-halved"></i> Validation Engine</div>
+              <div class="right">Active</div>
+            </div>
+            <div class="list-item">
+              <div class="left"><i class="fa-solid fa-wave-square"></i> Telemetry Stream</div>
+              <div class="right">Healthy</div>
+            </div>
+            <div class="list-item">
+              <div class="left"><i class="fa-solid fa-bolt"></i> Circuit Breaker</div>
+              <div class="right">Ready</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main class="dashboard">
+    <div class="container">
+      <div class="grid">
+        <div class="panel metric-card span-3">
+          <div class="panel-inner">
+            <div class="metric-head">
+              <div>
+                <div class="metric-title">Diagnosis P50</div>
+                <div class="metric-value" data-target="22" data-decimals="0">0</div>
+              </div>
+              <div class="metric-icon"><i class="fa-solid fa-stethoscope"></i></div>
+            </div>
+            <div class="metric-note">Median diagnosis latency measured across 1M samples.</div>
+          </div>
+        </div>
+
+        <div class="panel metric-card span-3">
+          <div class="panel-inner">
+            <div class="metric-head">
+              <div>
+                <div class="metric-title">Diagnosis P99</div>
+                <div class="metric-value" data-target="47" data-decimals="0">0</div>
+              </div>
+              <div class="metric-icon"><i class="fa-solid fa-gauge-high"></i></div>
+            </div>
+            <div class="metric-note">Tail latency profile for worst-case diagnosis behavior.</div>
+          </div>
+        </div>
+
+        <div class="panel metric-card span-3">
+          <div class="panel-inner">
+            <div class="metric-head">
+              <div>
+                <div class="metric-title">Circuit Breaker P50</div>
+                <div class="metric-value" data-target="0.4" data-decimals="1">0</div>
+              </div>
+              <div class="metric-icon"><i class="fa-solid fa-bolt"></i></div>
+            </div>
+            <div class="metric-note">Fast-path circuit breaker decision latency over 1M samples.</div>
+          </div>
+        </div>
+
+        <div class="panel metric-card span-3">
+          <div class="panel-inner">
+            <div class="metric-head">
+              <div>
+                <div class="metric-title">Telemetry rec/s</div>
+                <div class="metric-value" data-target="177582" data-decimals="0">0</div>
+              </div>
+              <div class="metric-icon"><i class="fa-solid fa-chart-line"></i></div>
+            </div>
+            <div class="metric-note">Single-thread telemetry throughput benchmark.</div>
+          </div>
+        </div>
+
+        <div class="panel span-8">
+          <div class="panel-inner">
+            <div class="eyebrow">Runtime Benchmark Profile</div>
+            <h2 style="font-size:1.9rem; margin-bottom:8px;">Telemetry and Latency Overview</h2>
+            <p class="lead" style="font-size:1rem;">
+              Diagnosis and recovery operate in the microsecond range while telemetry remains lightweight enough for continuous in-process recording.
+            </p>
+
+            <div class="chart">
+              <svg viewBox="0 0 1000 220" preserveAspectRatio="none" aria-hidden="true">
+                <defs>
+                  <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#00E5FF" />
+                    <stop offset="100%" stop-color="#6366F1" />
+                  </linearGradient>
+                  <linearGradient id="fillGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="rgba(0,229,255,0.35)" />
+                    <stop offset="100%" stop-color="rgba(99,102,241,0.02)" />
+                  </linearGradient>
+                </defs>
+                <path d="M0,160 C80,154 120,110 180,122 C260,138 290,70 360,84 C430,98 480,36 550,52 C620,68 680,118 740,102 C820,80 860,30 930,42 C965,48 985,64 1000,56 L1000,220 L0,220 Z"
+                      fill="url(#fillGrad)"></path>
+                <path d="M0,160 C80,154 120,110 180,122 C260,138 290,70 360,84 C430,98 480,36 550,52 C620,68 680,118 740,102 C820,80 860,30 930,42 C965,48 985,64 1000,56"
+                      fill="none" stroke="url(#lineGrad)" stroke-width="5" stroke-linecap="round"></path>
+              </svg>
+            </div>
+            <div class="chart-labels">
+              <span>Diagnosis</span>
+              <span>Circuit Breaker</span>
+              <span>Telemetry</span>
+              <span>Observability</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel span-4">
+          <div class="panel-inner">
+            <div class="eyebrow">Telemetry Detail</div>
+            <h2 style="font-size:1.7rem; margin-bottom:10px;">Stream Characteristics</h2>
+            <div class="list">
+              <div class="list-item">
+                <div class="left"><i class="fa-solid fa-stopwatch"></i> Telemetry Latency</div>
+                <div class="right"><span class="inline-counter" data-target="5.6" data-decimals="1">0</span> µs/record</div>
+              </div>
+              <div class="list-item">
+                <div class="left"><i class="fa-solid fa-box"></i> SDK Footprint</div>
+                <div class="right">~375 KB</div>
+              </div>
+              <div class="list-item">
+                <div class="left"><i class="fa-solid fa-link"></i> Dependencies</div>
+                <div class="right">1 (httpx)</div>
+              </div>
+              <div class="list-item">
+                <div class="left"><i class="fa-solid fa-network-wired"></i> Overhead</div>
+                <div class="right">In-process</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel span-6">
+          <div class="panel-inner">
+            <div class="eyebrow">Verification Coverage</div>
+            <h2 style="font-size:1.8rem; margin-bottom:10px;">Fault Injection Validation</h2>
+            <p class="lead" style="font-size:1rem;">
+              Correctover was verified through extensive injected failure scenarios to validate recovery logic and contract enforcement behavior.
+            </p>
+            <div class="mini-grid" style="margin-top:18px;">
+              <div class="mini">
+                <div class="k">Fault Injections</div>
+                <div class="v"><span class="inline-counter" data-target="70000" data-decimals="0">0</span></div>
+              </div>
+              <div class="mini">
+                <div class="k">Fault Types</div>
+                <div class="v">7</div>
+              </div>
+              <div class="mini">
+                <div class="k">Healing Model</div>
+                <div class="v">MAPE-K</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel span-6">
+          <div class="panel-inner">
+            <div class="eyebrow">Adoption Signals</div>
+            <h2 style="font-size:1.8rem; margin-bottom:10px;">Package and Community</h2>
+            <div class="list">
+              <div class="list-item">
+                <div class="left"><i class="fa-brands fa-python"></i> PyPI Monthly Downloads</div>
+                <div class="right"><span class="inline-counter" data-target="13769" data-decimals="0">0</span></div>
+              </div>
+              <div class="list-item">
+                <div class="left"><i class="fa-solid fa-calendar-day"></i> PyPI Daily Downloads</div>
+                <div class="right"><span class="inline-counter" data-target="623" data-decimals="0">0</span></div>
+              </div>
+              <div class="list-item">
+                <div class="left"><i class="fa-brands fa-github"></i> GitHub Stars</div>
+                <div class="right"><span class="inline-counter" data-target="4" data-decimals="0">0</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel span-12">
+          <div class="panel-inner">
+            <div class="eyebrow">Capability Matrix</div>
+            <h2 style="font-size:1.9rem; margin-bottom:12px;">6-Dimension Contract Validation</h2>
+            <div class="mini-grid">
+              <div class="mini"><div class="k">1</div><div class="v" style="font-size:1.25rem;">Schema Validation</div></div>
+              <div class="mini"><div class="k">2</div><div class="v" style="font-size:1.25rem;">Semantic Equivalence</div></div>
+              <div class="mini"><div class="k">3</div><div class="v" style="font-size:1.25rem;">Latency Compliance</div></div>
+              <div class="mini"><div class="k">4</div><div class="v" style="font-size:1.25rem;">Cost Guardrails</div></div>
+              <div class="mini"><div class="k">5</div><div class="v" style="font-size:1.25rem;">Content Integrity</div></div>
+              <div class="mini"><div class="k">6</div><div class="v" style="font-size:1.25rem;">Identity Verification</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-note">
+        Correctover SDK dashboard • Verified failover • Dark-mode benchmark console
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function animateNumber(el, end, decimals=0, duration=1600){
+      const startTime = performance.now();
+      function frame(now){
+        const progress = Math.min((now - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const value = end * eased;
+        el.textContent = decimals > 0
+          ? value.toFixed(decimals)
+          : Math.round(value).toLocaleString();
+        if(progress < 1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    const counters = document.querySelectorAll('.metric-value, .inline-counter');
+    const observer = new IntersectionObserver((entries)=>{
+      entries.forEach(entry=>{
+        if(entry.isIntersecting && !entry.target.dataset.animated){
+          const target = parseFloat(entry.target.dataset.target || "0");
+          const decimals = parseInt(entry.target.dataset.decimals || "0", 10);
+          animateNumber(entry.target, target, decimals, 1500);
+          entry.target.dataset.animated = "true";
+        }
+      });
+    }, {threshold:0.2});
+
+    counters.forEach(c => observer.observe(c));
+
+    setTimeout(() => {
+      document.querySelectorAll('.metric-value[data-target="22"], .metric-value[data-target="47"]').forEach(el => {
+        if (!el.dataset.unitApplied) {
+          el.insertAdjacentHTML('afterend', '<span style="margin-left:6px;font-weight:800;color:var(--text);font-size:1rem;">µs</span>');
+          el.dataset.unitApplied = "true";
+        }
+      });
+      document.querySelector('.metric-value[data-target="0.4"]').insertAdjacentHTML('afterend', '<span style="margin-left:6px;font-weight:800;color:var(--text);font-size:1rem;">µs</span>');
+      document.querySelector('.metric-value[data-target="177582"]').insertAdjacentHTML('afterend', '<span style="margin-left:6px;font-weight:800;color:var(--text);font-size:1rem;">rec/s</span>');
+    }, 10);
+  </script>
+</body>
+</html>
+```

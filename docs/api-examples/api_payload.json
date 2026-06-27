@@ -1,0 +1,14 @@
+{
+  "model": "gpt-5.4",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are an expert Remotion video developer. Generate production-quality TypeScript React components for a 45-second product demo video about Correctover (verified AI failover SDK). Use Remotion v4 API. Color scheme: cyan (#00E5FF), indigo (#6366F1), dark bg (#0A0A1A), white text. Duration: 30fps x 45s = 1350 frames."
+    },
+    {
+      "role": "user",
+      "content": "Create 4 TypeScript React components for a Remotion product demo. Use Remotion v4 API: useCurrentFrame(), interpolate(), spring(), Sequence, AbsoluteFill, useVideoConfig. Use inline styles. Font: system sans-serif. 1920x1080, 30fps, 1350 frames total. Color: dark bg #0A0A1A, cyan #00E5FF, indigo #6366F1, white #FFFFFF.\n\nSCENE 1 (0-360 frames, 12s): 'Your AI Failover is Broken'\n- Dark background with subtle grid lines\n- Large 'HTTP 200 OK' in green that looks deceptively safe\n- 4 failure modes animate in sequentially with red alerts: Silent Model Substitution, Semantic Drift, Cost Explosion, Content Degradation\n- Each failure mode slides in with a warning icon and red highlight\n- End with 'But HTTP 200 Cannot Catch These' in yellow/amber\n\nSCENE 2 (360-840 frames, 16s): 'Correctover: Verified Failover'\n- Gradient title 'Verified Failover' (cyan to indigo)\n- 6 dimension boxes animating in with checkmarks: Schema Validation, Semantic Equivalence, Latency Compliance, Cost Guardrails, Content Integrity, Identity Verification\n- Benchmark counter: 'Diagnosis: P50 22us P99 47us'\n- 'pip install correctover' code display\n\nSCENE 3 (840-1080 frames, 8s): 'How It Works'\n- Architecture flow: Your App -> SDK(in-process) -> Provider A / Provider B / Provider C\n- Badges: Zero Network Overhead, No Proxy, Open Source\n- Verification shield icon appears before failover arrow\n\nSCENE 4 (1080-1350 frames, 9s): 'Build Reliable AI'\n- Large 'correctover.com' url\n- 'Verified Failover for LLM Applications' subtitle\n- 'pip install correctover' CTA button with gradient\n- Fade out ending\n\nOutput EACH file with a comment at top like: // === Scene1.tsx ==="
+    }
+  ],
+  "max_tokens": 8000
+}

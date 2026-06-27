@@ -1,0 +1,14 @@
+{
+  "model": "gpt-5.4",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a top-tier web architect and frontend engineer. Generate production-ready single-file HTML applications. Use cyan (#00E5FF) / indigo (#6366F1) color scheme, dark theme (#0A0A1A), responsive design. All CSS and JS inline in one HTML file."
+    },
+    {
+      "role": "user",
+      "content": "I need two complete HTML files for Correctover product website. Output each file's complete code in a fenced code block with the filename as the language tag.\n\n## SITE 1: correctover.com index.html (Product Landing Page)\n\nCorrectover is an LLM API reliability SDK (Verified Failover). Product features:\n- 6-dimension contract validation: Schema Validation, Semantic Equivalence, Latency Compliance, Cost Guardrails, Content Integrity, Identity Verification\n- Microsecond diagnosis: P50=22µs, P99=47µs (benchmarked 1M samples)\n- Circuit breaker: P50=0.4µs (1M samples)\n- Telemetry throughput: 177,582 rec/s single-thread\n- Telemetry latency: 5.6µs/record\n- MAPE-K self-healing loop: Monitor->Analyze->Plan->Execute->Knowledge\n- 70,000 fault injections verified across 7 fault types\n- One-line install: pip install correctover\n- Zero network overhead, in-process SDK\n- Size: ~375 KB, 1 dependency (httpx)\n- PyPI: 13,769 monthly / 623 daily downloads\n- GitHub: 4 stars\n\nPage structure (45-second scroll experience):\n1. Hero: Animated particle/grid background, title 'Verified Failover for LLM Applications', subtitle, 'pip install correctover' CTA button\n2. Problem: 'HTTP 200 Is Not Enough' - show 4 failure modes with animated cards\n3. Solution: 6-dimension contract validation with checkmark animations\n4. Benchmark: Live counter from 0 to real values (P50=22, P99=47, 0.4µs, 177K rec/s) with scroll-triggered animation\n5. SDK Architecture: MAPE-K loop visual flow diagram\n6. Pricing: 4 tiers (Trial Free / Pro $99/mo / Professional $499/mo / Enterprise Custom)\n7. CTA: Final call to action with gradient button\n8. Footer: Links to docs, GitHub, PyPI, contact\n\n## SITE 2: console.html (Real Data Dashboard)\n\nA live dashboard showing real Correctover SDK benchmarks:\n- Diagnosis: P50=22µs, P99=47µs\n- Circuit Breaker: P50=0.4µs\n- Telemetry Throughput: 177,582 rec/s\n- Telemetry Latency: 5.6µs/record\n- SDK Size: ~375 KB\n- Dependencies: 1 (httpx)\n- PyPI Monthly: 13,769\n- PyPI Daily: 623\n- GitHub Stars: 4\n- Fault Injections: 70,000\n- System Status: Online indicator with latency bar\n\nDesign: Dark theme, cyan/indigo gradients, animated counters, glowing cards, grid background, responsive, Font Awesome icons via CDN.\n\nOutput both complete files. Make them visually stunning."
+    }
+  ],
+  "max_tokens": 16000
+}

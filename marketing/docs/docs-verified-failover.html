@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verified Failover Architecture — Correctover | MAPE-K Autonomic Loop</title>
+<meta name="description" content="Technical deep-dive into Correctover's verified failover architecture: MAPE-K autonomic loop, L3 failover chain, CANON contract validation engine, and drift detection.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://correctover.com/docs/verified-failover.html">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#e8e8e8;background:#0a0a0f;}
+.container{max-width:900px;margin:0 auto;padding:40px 24px;}
+h1{font-size:2rem;margin-bottom:0.5rem;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+h2{font-size:1.4rem;margin:2rem 0 1rem;color:#93c5fd;}
+h3{font-size:1.1rem;margin:1.5rem 0 0.8rem;color:#bfdbfe;}
+p{color:#a0a0b0;margin-bottom:1rem;}
+a{color:#60a5fa}
+pre{background:#0d0d14;border:1px solid #1e293b;border-radius:8px;padding:16px;overflow-x:auto;margin:1rem 0;font-size:0.85rem;color:#e2e8f0;}
+code{background:#1e293b;padding:2px 6px;border-radius:4px;font-size:0.85rem;}
+pre code{background:transparent;padding:0;}
+.header{border-bottom:1px solid #1e293b;padding-bottom:1rem;margin-bottom:2rem;}
+.header a{color:#94a3b8;margin-right:1.5rem;font-size:0.9rem;}
+.note{background:#111827;border-left:3px solid #60a5fa;padding:12px 16px;margin:1rem 0;border-radius:0 8px 8px 0;color:#94a3b8;font-size:0.9rem;}
+.footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid #1e293b;color:#64748b;font-size:0.85rem;}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+  <a href="https://correctover.com/">← Home</a>
+  <a href="/docs/">Docs</a>
+</div>
+
+<h1>⚡ Verified Failover Architecture</h1>
+<p>Correctover implements the <strong>MAPE-K autonomic loop</strong> (Monitor-Analyze-Plan-Execute over Knowledge) for self-healing LLM API calls. This is the technical foundation behind verified failover.</p>
+
+<h2>Core Architecture</h2>
+
+<h3>L1: In-Process Monitoring (0.4µs)</h3>
+<p>Every LLM API call is intercepted at the SDK level. The monitor collects response metadata and performance metrics before passing them to the analysis engine.</p>
+<ul style="color:#a0a0b0;line-height:2;">
+  <li>✅ Zero additional network hops</li>
+  <li>✅ No gateway proxy required</li>
+  <li>✅ Works in air-gapped and offline environments</li>
+</ul>
+
+<h3>L2: CANON Contract Validation Engine (22µs P50)</h3>
+<p>Correctover's proprietary <strong>CANON</strong> engine validates every response across 6 dimensions simultaneously, in-process, before the response reaches application code.</p>
+
+<pre><code>CANON validation process:
+1. Parse response → extract structure
+2. Validate JSON schema (8µs)
+3. Check field types (5µs)
+4. Measure latency (1µs)
+5. Calculate cost (2µs)
+6. Verify model identity (3µs)
+7. Semantic coherence check (22µs)
+Total P50: 22µs | P99: 99µs</code></pre>
+
+<h3>L3: Multi-Provider Failover Chain (949ms E2E)</h3>
+<p>When contract validation fails on the primary provider, Correctover escalates through the configured fallback chain:</p>
+
+<pre><code>Provider 1 (OpenAI gpt-4o)
+  ↓ contract fails → validated=False, reason="schema mismatch"
+Provider 2 (Anthropic claude-3-opus)
+  ↓ contract fails → validated=False, reason="latency > 5s"
+Provider 3 (Google gemini-2.0-pro)
+  ↓ contract passes ✅
+E2E failover time: 949ms
+  ├─ DNS resolution: ~20ms
+  ├─ Connection setup: ~150ms
+  ├─ API call: ~750ms
+  └─ Contract validation: ~22µs</code></pre>
+
+<h2>The MAPE-K Autonomic Loop</h2>
+
+<h3>Monitor</h3>
+<p>Tracks per-provider metrics: response time, error rate, token usage, contract failure rate, and drift indicators. Runs at 0.4µs per record with 177,582 rec/s throughput.</p>
+
+<h3>Analyze</h3>
+<p>Detects patterns: repeated timeouts → circuit breaker opens; schema drift → alert; cost anomalies → budget cap enforced. Analysis runs at 47µs P99 for 1M samples.</p>
+
+<h3>Plan</h3>
+<p>Selects the optimal failover path based on: failure type, provider health scores, cost budgets, latency requirements, and geographic proximity. The plan is re-evaluated per-request.</p>
+
+<h3>Execute</h3>
+<p>Switches provider, sets up new connection, sends request with the same prompt, and applies contract validation to the response. If validated, returns result; if not, escalates to next plan.</p>
+
+<h3>Knowledge</h3>
+<p>The self-healing rule database grows through the MAPE-K flywheel. Started with 84 rules, now 87 (verified in 70,000+ fault injection scenarios across 7 failure types).</p>
+
+<h2>Drift Detection</h2>
+<p>Real-time monitoring across all 6 dimensions with automatic alerting. Detects:</p>
+<ul style="color:#a0a0b0;line-height:2;">
+  <li>🔍 Schema drift: field types changing between versions</li>
+  <li>🔍 Latency degradation: gradual response time increases</li>
+  <li>🔍 Cost anomalies: unexpected token usage spikes</li>
+  <li>🔍 Model substitution: provider returns different model than billed</li>
+  <li>🔍 Semantic drift: output quality changes over time</li>
+</ul>
+
+<h2>Checkpoint: Long-Chain Resilience</h2>
+<p>For multi-step agent chains, Correctover's Checkpoint feature saves intermediate states at each validated step. If a chain fails mid-execution, it can be resumed from the last validated checkpoint — no need to restart from scratch.</p>
+
+<div class="note">
+<strong>Key differentiator:</strong> Traditional failover checks HTTP 200. Correctover verifies the <em>entire contract</em> after each failover. Failover ≠ Correctover.
+<a href="https://correctover.com/failover-vs-verified-failover.html">Learn more →</a>
+</div>
+
+<div class="footer">
+  <p>© 2026 Correctover可瑞沃 — Enterprise AI Reliability Infrastructure</p>
+</div>
+</div>
+</body>
+</html>

@@ -21,3 +21,18 @@ Thumbs.db
 
 # Go
 vendor/
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# Node
+node_modules/

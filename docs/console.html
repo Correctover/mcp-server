@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeuralBridge SDK 中文控制台 / 数据面板</title>
+  <meta name="description" content="NeuralBridge SDK 中文控制台与数据面板，展示性能、产品、社区与系统状态指标。" />
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    referrerpolicy="no-referrer"
+  />
+  <style>
+    :root {
+      --bg: #0A0A1A;
+      --bg-soft: #101228;
+      --panel: rgba(16, 18, 40, 0.82);
+      --panel-2: rgba(20, 24, 52, 0.92);
+      --line: rgba(99, 102, 241, 0.25);
+      --text: #eef2ff;
+      --muted: #a8b0d3;
+      --cyan: #00E5FF;
+      --indigo: #6366F1;
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --shadow: 0 10px 30px rgba(0, 229, 255, 0.08), 0 10px 50px rgba(99, 102, 241, 0.18);
+      --radius: 18px;
+      --radius-sm: 14px;
+      --container: 1280px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(0, 229, 255, 0.10), transparent 28%),
+        radial-gradient(circle at top right, rgba(99, 102, 241, 0.16), transparent 32%),
+        linear-gradient(180deg, #0A0A1A 0%, #0A0A1A 100%);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 36px 36px;
+      mask-image: radial-gradient(circle at center, black 45%, transparent 100%);
+      pointer-events: none;
+      opacity: .45;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .container {
+      width: min(calc(100% - 32px), var(--container));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(16px);
+      background: rgba(10, 10, 26, 0.72);
+      border-bottom: 1px solid rgba(99, 102, 241, 0.18);
+    }
+
+    .topbar-inner {
+      min-height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .brand-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(135deg, rgba(0,229,255,0.16), rgba(99,102,241,0.22));
+      border: 1px solid rgba(0,229,255,0.25);
+      box-shadow: inset 0 0 20px rgba(0,229,255,0.08), 0 0 20px rgba(99,102,241,0.18);
+      color: var(--cyan);
+      font-size: 1.15rem;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand-title {
+      font-size: 1.02rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .brand-subtitle {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .nav a {
+      color: var(--muted);
+      font-size: 0.95rem;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      transition: .25s ease;
+    }
+
+    .nav a:hover {
+      color: var(--text);
+      border-color: rgba(0,229,255,0.18);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .hero {
+      padding: 34px 0 22px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.3fr .9fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .hero-card,
+    .status-panel,
+    .section-card,
+    .metric-card,
+    .footer-card {
+      background: linear-gradient(180deg, rgba(16,18,40,0.86), rgba(12,14,30,0.95));
+      border: 1px solid rgba(99, 102, 241, 0.18);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+    }
+
+    .hero-card {
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      right: -60px;
+      top: -60px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,229,255,0.18), transparent 68%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(0,229,255,0.08);
+      border: 1px solid rgba(0,229,255,0.18);
+      color: var(--cyan);
+      font-size: .86rem;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .hero-desc {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.75;
+      max-width: 760px;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .tag {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(99,102,241,0.10);
+      border: 1px solid rgba(99,102,241,0.18);
+      color: #dbe5ff;
+      font-size: .9rem;
+    }
+
+    .status-panel {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .panel-title h2,
+    .section-heading h2 {
+      margin: 0;
+      font-size: 1.12rem;
+      font-weight: 700;
+    }
+
+    .clock {
+      margin-top: 8px;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      color: var(--text);
+    }
+
+    .clock-date {
+      color: var(--muted);
+      margin-top: 6px;
+      font-size: .95rem;
+    }
+
+    .status-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .status-label {
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    .status-value {
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-align: right;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 12px rgba(34,197,94,.7);
+      display: inline-block;
+      animation: pulse 1.8s infinite;
+    }
+
+    .uptime {
+      margin-top: 2px;
+    }
+
+    .uptime-bar {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .uptime-fill {
+      width: 99.98%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--indigo));
+      box-shadow: 0 0 20px rgba(0,229,255,.3);
+    }
+
+    .uptime-text {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: .88rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .sections {
+      padding: 12px 0 28px;
+      display: grid;
+      gap: 24px;
+    }
+
+    .section-card {
+      padding: 22px;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .section-meta {
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    .section-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: rgba(99,102,241,0.14);
+      border: 1px solid rgba(99,102,241,0.22);
+      color: var(--cyan);
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .metric-card {
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+      transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(0,229,255,0.25);
+      box-shadow: 0 14px 32px rgba(0,229,255,0.08), 0 18px 40px rgba(99,102,241,0.16);
+    }
+
+    .metric-card::before {
+      content: "";
+      position: absolute;
+      inset: auto -20px -40px auto;
+      width: 100px;
+      height: 100px;
+      background: radial-gradient(circle, rgba(99,102,241,0.15), transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .metric-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .metric-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(0,229,255,0.12), rgba(99,102,241,0.20));
+      border: 1px solid rgba(0,229,255,0.18);
+      color: var(--cyan);
+      font-size: 1.05rem;
+      box-shadow: inset 0 0 16px rgba(0,229,255,0.08);
+    }
+
+    .metric-label {
+      font-size: 0.95rem;
+      color: var(--muted);
+      line-height: 1.5;
+      min-height: 46px;
+    }
+
+    .metric-value {
+      font-size: clamp(1.4rem, 2vw, 2rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+      color: var(--text);
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .metric-value .suffix {
+      font-size: .9rem;
+      color: var(--cyan);
+      font-weight: 700;
+    }
+
+    .metric-desc {
+      color: var(--muted);
+      font-size: .9rem;
+      line-height: 1.65;
+    }
+
+    .footer {
+      padding: 0 0 34px;
+    }
+
+    .footer-card {
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    .footer-note strong {
+      color: var(--text);
+    }
+
+    .glow {
+      color: var(--cyan);
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.7; }
+      70% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.7; }
+    }
+
+    @media (max-width: 1100px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 720px) {
+      .topbar-inner {
+        padding: 12px 0;
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .nav {
+        width: 100%;
+        justify-content: flex-start;
+      }
+      .hero {
+        padding-top: 22px;
+      }
+      .hero-card,
+      .status-panel,
+      .section-card,
+      .footer-card {
+        border-radius: 16px;
+      }
+      .hero-card,
+      .status-panel,
+      .section-card {
+        padding: 18px;
+      }
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+      .clock {
+        font-size: 1.55rem;
+      }
+      .metric-label {
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="brand">
+        <div class="brand-badge">
+          <i class="fa-solid fa-brain"></i>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">NeuralBridge SDK 中文控制台</div>
+          <div class="brand-subtitle">实时数据面板 / Console Dashboard</div>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="主导航">
+        <a href="#performance">性能指标</a>
+        <a href="#product">产品指标</a>
+        <a href="#community">社区指标</a>
+        <a href="#system">系统状态</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-card">
+          <div class="eyebrow">
+            <i class="fa-solid fa-wave-square"></i>
+            基于基准测试与官方 API 的真实指标
+          </div>
+          <h1>NeuralBridge SDK 数据总览</h1>
+          <p class="hero-desc">
+            本控制台集中展示 NeuralBridge SDK 的性能、产品、社区与系统状态数据。
+            页面采用深色科技风设计，支持响应式布局、实时钟表显示以及指标数字滚动动画，
+            适合用于 SDK 官网、产品控制台或演示看板。
+          </p>
+          <div class="hero-tags">
+            <span class="tag"><i class="fa-solid fa-gauge-high"></i> 微秒级延迟</span>
+            <span class="tag"><i class="fa-solid fa-box"></i> 轻量级 SDK</span>
+            <span class="tag"><i class="fa-solid fa-shield-halved"></i> 故障注入验证</span>
+            <span class="tag"><i class="fa-solid fa-chart-line"></i> 实时数据展示</span>
+          </div>
+        </div>
+
+        <aside class="status-panel" id="system">
+          <div>
+            <div class="panel-title">
+              <h2>系统状态</h2>
+              <span class="eyebrow" style="margin:0; padding:6px 10px;">
+                <i class="fa-solid fa-satellite-dish"></i> Live
+              </span>
+            </div>
+            <div class="clock" id="clock">--:--:--</div>
+            <div class="clock-date" id="clockDate">---- 年 -- 月 -- 日</div>
+          </div>
+
+          <div class="status-list">
+            <div class="status-item">
+              <div class="status-label">服务状态</div>
+              <div class="status-value"><span class="dot"></span> 在线</div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">延迟状态</div>
+              <div class="status-value"><i class="fa-solid fa-check-circle glow"></i> 正常（&lt;5ms）</div>
+            </div>
+            <div class="status-item">
+              <div style="width:100%;">
+                <div class="status-label">服务正常运行时间指示器</div>
+                <div class="uptime">
+                  <div class="uptime-bar" aria-label="服务正常运行时间">
+                    <div class="uptime-fill"></div>
+                  </div>
+                  <div class="uptime-text">
+                    <span>当前可用性</span>
+                    <strong>99.98%</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="sections">
+      <div class="container">
+        <div class="section-card" id="performance">
+          <div class="section-heading">
+            <div class="section-title-wrap">
+              <div class="section-icon"><i class="fa-solid fa-microchip"></i></div>
+              <div>
+                <h2>性能指标组</h2>
+                <div class="section-meta">来自基准测试数据</div>
+              </div>
+            </div>
+            <div class="section-meta">关注微秒级处理能力与吞吐表现</div>
+          </div>
+
+          <div class="metrics-grid">
+            <article class="metric-card">
+              <div class="metric-top">
+                <div class="metric-icon"><i class="fa-solid fa-stethoscope"></i></div>
+              </div>
+              <div class="metric-label">故障诊断 P50</div>
+              <div class="metric-value">
+                <span class="counter" data-target="22" data-decimals="0">0</span>
+                <span class="suffix">µs</span>
+              </div>
+              <div class="metric-desc">1M 样本条件下的中位响应时间。</div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-top">
+                <div class="metric-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+              </div>
+              <div class="metric-label">故障诊断 P99</div>
+              <div class="metric-value">
+                <span class="counter" data-target="47" data-decimals="0">0</span>
+                <span class="suffix">µs</span>
+              </div>
+              <div class="metric-desc">1M 样本条件下的高分位延迟表现。</div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-top">
+                <div class="metric-icon"><i class="fa-solid fa-bolt"></i></div>
+              </div>
+              <div class="metric-label">熔断检查 P50</div>
+              <div class="metric-value">
+                <span class="counter" data-target="0.4" data-decimals="1">0</span>
+                <span class="suffix">µs</span>
+              </div>
+              <div class="metric-desc">1M 样本下熔断逻辑的超低开销检查时间。</div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-top">
+                <div class="metric-icon"><i class="fa-solid fa-database"></i></div>
+              </div>
+              <div class="metric-label">遥测吞吐量</div>
+              <div class="metric-value">
+                <span class="counter" data-target="177582" data-decimals="0" data-format="int">0</span>
+                <span class="suffix">rec/s</span>
+              </div>
+              <div class="metric-desc">单线程条件下的记录处理吞吐能力。</div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-top">
+                <div class="metric-icon"><i class="fa-solid fa-timeline"></i></div>
+              </div>
+              <div class="metric-label">遥测延迟</div>
+              <div class="metric-value">
+                <span class="counter" data-target="5.6" data-decimals="1">0</span>
+                <span class="suffix">µs/record</span>
+              </div>
+              <div class="metric-desc">单条遥测记录处理的平均延迟。</div>
+            </article>
+          </div>
+        </div>
+
+        <div class="section-card" id="product">
+          <div class="section-heading">
+            <div class="section-title-wrap">
+              <div class="section-icon"><i class="fa-solid fa-cube"></i></div>
+              <div>
+                <h2>产品指标组</h2>
+                <div class="section-meta">SDK 体积、依赖与验证规模</div>
+              </div>
+            </div>
+            <div class="section-meta">轻量、简洁、工程化可用</div>
+          </div>
+
+          <div class="metrics-grid">
+            <article class="metric-card">
+              <div class="metric-top">
+                <div class="metric-icon"><i class="fa-solid fa-box-open"></i></div>
+              </div>
+              <div class="metric-label">SDK 大小</div>
+              <div class="metric-value">
+                <span class="suffix">~</span>
+                <span class="counter" data-target="375" data-decimals="0">0</span>
+                <span class="suffix">KB</span>
+              </div>
+              <div class="metric-desc">适合快速集成与高效分发的轻量包体积。</div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-top">
+                <div class="metric-icon"><i class="fa-solid fa-link"></i></div>
+              </div>
+              <div class="metric-label">依赖数</div>
+              <div class="metric-value">
+                <span class="counter" data-target="1" data-decimals="0">0</span>
+                <span class="suffix">（httpx）</span>
+              </div>
+              <div class="metric-desc">核心依赖极少，便于维护与部署。</div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-top">
+                <div class="metric-icon"><i class="fa-solid fa-shield-virus"></i></div>
+              </div>
+              <div class="metric-label">故障注入验证</div>
+              <div class="metric-value">
+                <span class="counter" data-target="70000" data-decimals="0" data-format="int">0</span>
+                <span class="suffix">次</span>
+              </div>
+              <div class="metric-desc">覆盖 7 种故障类型的验证测试规模。</div>
+            </article>
+          </div>
+        </div>
+
+        <div class="section-card" id="community">
+          <div class="section-heading">
+            <div class="section-title-wrap">
+              <div class="section-icon"><i class="fa-solid fa-users"></i></div>
+              <div>
+                <h2>社区指标组</h2>
+                <div class="section-meta">来自公开社区与发行平台数据</div>
+              </div>
+            </div>
+            <div class="section-meta">观察下载热度与项目关注度</div>
+          </div>
+
+          <div class="metrics-grid">
+            <article class="metric-card">
+              <div class="metric-top">
+                <div class="metric-icon"><i class="fa-brands fa-python"></i></div>
+              </div>
+              <div class="metric-label">PyPI 月下载</div>
+              <div class="metric-value">
+                <span class="counter" data-target="13769" data-decimals="0" data-format="int">0</span>
+                <span class="suffix">次</span>
+              </div>
+              <div class="metric-desc">最近月度下载量，反映社区活跃度与使用趋势。</div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-top">
+                <div class="metric-icon"><i class="fa-solid fa-calendar-day"></i></div>
+              </div>
+              <div class="metric-label">PyPI 日下载</div>
+              <div class="metric-value">
+                <span class="counter" data-target="623" data-decimals="0">0</span>
+                <span class="suffix">次</span>
+              </div>
+              <div class="metric-desc">日均下载规模，体现持续使用需求。</div>
+            </article>
+
+            <article class="metric-card">
+              <div class="metric-top">
+                <div class="metric-icon"><i class="fa-brands fa-github"></i></div>
+              </div>
+              <div class="metric-label">GitHub Stars</div>
+              <div class="metric-value">
+                <span class="counter" data-target="4" data-decimals="0">0</span>
+                <span class="suffix">★</span>
+              </div>
+              <div class="metric-desc">GitHub 仓库当前收藏数。</div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-card">
+          <div class="footer-note">
+            <i class="fa-solid fa-circle-info glow"></i>
+            数据来源：基准测试结果与官方 API / 公共平台指标
+          </div>
+          <div class="footer-note">
+            <strong>最后更新：</strong>
+            <span id="lastUpdated">--</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      const counters = document.querySelectorAll('.counter');
+      const clockEl = document.getElementById('clock');
+      const clockDateEl = document.getElementById('clockDate');
+      const lastUpdatedEl = document.getElementById('lastUpdated');
+
+      function pad(n) {
+        return String(n).padStart(2, '0');
+      }
+
+      function formatNumber(value, decimals = 0) {
+        return Number(value).toLocaleString('zh-CN', {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals
+        });
+      }
+
+      function updateClock() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = now.getMonth() + 1;
+        const d = now.getDate();
+        const hh = pad(now.getHours());
+        const mm = pad(now.getMinutes());
+        const ss = pad(now.getSeconds());
+        const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+
+        clockEl.textContent = `${hh}:${mm}:${ss}`;
+        clockDateEl.textContent = `${y} 年 ${m} 月 ${d} 日 · ${weekdays[now.getDay()]}`;
+      }
+
+      function setLastUpdated() {
+        const now = new Date();
+        lastUpdatedEl.textContent = now.toLocaleString('zh-CN', {
+          hour12: false
+        });
+      }
+
+      function animateCounter(el) {
+        if (el.dataset.animated === 'true') return;
+        el.dataset.animated = 'true';
+
+        const target = parseFloat(el.dataset.target || '0');
+        const decimals = parseInt(el.dataset.decimals || '0', 10);
+        const duration = target > 10000 ? 1800 : 1400;
+        const startTime = performance.now();
+
+        function step(currentTime) {
+          const progress = Math.min((currentTime - startTime) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const currentValue = target * eased;
+
+          el.textContent = formatNumber(currentValue, decimals);
+
+          if (progress < 1) {
+            requestAnimationFrame(step);
+          } else {
+            el.textContent = formatNumber(target, decimals);
+          }
+        }
+
+        requestAnimationFrame(step);
+      }
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const localCounters = entry.target.querySelectorAll('.counter');
+            localCounters.forEach(animateCounter);
+            observer.unobserve(entry.target);
+          }
+        });
+      }, {
+        threshold: 0.2
+      });
+
+      document.querySelectorAll('.section-card, .status-panel').forEach(section => {
+        observer.observe(section);
+      });
+
+      counters.forEach(counter => {
+        const card = counter.closest('.metric-card');
+        if (card) observer.observe(card);
+      });
+
+      updateClock();
+      setInterval(updateClock, 1000);
+      setLastUpdated();
+
+      window.addEventListener('load', () => {
+        counters.forEach(animateCounter);
+      });
+    })();
+  </script>
+</body>
+</html>

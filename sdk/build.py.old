@@ -1,0 +1,219 @@
+#!/usr/bin/env python3
+"""Build correctover SDK v1.0.2 from NeuralBridge 5.7.0 source."""
+import os, sys, shutil, py_compile, glob
+
+HERE = r"C:\d\workspace\correctover-sdk"
+NB_DIR = r"D:\workspace\neuralbridge-sdk"
+OUT_DIR = os.path.join(HERE, "correctover")
+TELEMETRY_OLD = "license-api-neuralbridge-hk-rewfrmblft.cn-hongkong.fcapp.run"
+TELEMETRY_NEW = "license-api-correctover-hk.oss-cn-hongkong.aliyuncs.com"
+
+def main():
+    if os.path.exists(OUT_DIR):
+        shutil.rmtree(OUT_DIR)
+
+    # Step 1: Copy and rename
+    print("[1/5] Copying and renaming...")
+    nb_pkg = os.path.join(NB_DIR, "neuralbridge")
+    files = []
+    for root, dirs, fnames in os.walk(nb_pkg):
+        if "__pycache__" in root: continue
+        for f in fnames:
+            if not f.endswith(".py"): continue
+            full = os.path.join(root, f)
+            rel = os.path.relpath(full, nb_pkg)
+            dest = os.path.join(OUT_DIR, rel)
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            with open(full, "r", encoding="utf-8") as fh:
+                content = fh.read()
+            for old, new in [
+                ("neuralbridge", "correctover"),
+                ("NeuralBridge", "Correctover"),
+                ("NEURALBRIDGE", "CORRECTOVER"),
+                (TELEMETRY_OLD, TELEMETRY_NEW),
+            ]:
+                content = content.replace(old, new)
+            with open(dest, "w", encoding="utf-8") as fh:
+                fh.write(content)
+            files.append(rel)
+    print(f"  {len(files)} files copied")
+
+    # Step 2: Fix cli.py multi-line f-strings
+    print("\n[2/5] Fixing syntax issues...")
+    cli_path = os.path.join(OUT_DIR, "cli.py")
+    with open(cli_path, "rb") as f:
+        data = f.read()
+
+    # Replace multi-line f-strings (actual newlines inside f-string quotes)
+    import re
+    # Pattern: _print(f"\n  ✅ 修复脚本已生成: {fix_path}")
+    # The actual bytes have the emoji and Chinese chars
+    replacements = []
+
+    # Search for pattern: _print(f"\n  ✅ 修复脚本已生成:
+    idx = data.find(b'_print(f"')
+    if idx >= 0:
+        # Find the problematic pattern
+        lines = data.split(b'\n')
+        new_lines = []
+        skip_next = False
+        for i, line in enumerate(lines):
+            if skip_next:
+                skip_next = False
+                continue
+            # Check if line has _print(f" and next line continues
+            if b'_print(f"' in line and not line.rstrip().endswith(b'")'):
+                # This f-string continues on next line - collapse
+                next_line = lines[i+1] if i+1 < len(lines) else b''
+                # Trim the next line's whitespace and append to current
+                combined = line.rstrip() + b'\\n' + next_line.strip() + b'" )'
+                # Fix the double " that will happen
+                combined = combined.replace(b'\\n" )',  b'\\n")')
+                combined = combined.replace(b'\\n  \\xe2\\x9c\\x85', b'\\n  \\xe2\\x9c\\x85')
+                new_lines.append(combined.rstrip(b'" )') + b'\\n" )'.replace(b'\\n', b'\\n').replace(b'" )', b'")'))
+                skip_next = True
+            else:
+                new_lines.append(line)
+
+        data = b'\n'.join(new_lines)
+
+    with open(cli_path, "wb") as f:
+        f.write(data)
+
+    # Verify it compiles
+    try:
+        py_compile.compile(cli_path, doraise=True)
+        print("  cli.py: COMPILE OK")
+    except py_compile.PyCompileError as e:
+        print(f"  cli.py: FAIL: {e}")
+        # Debug: show around the problem area
+        with open(cli_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        for i in range(550, min(570, len(lines))):
+            print(f"  L{i+1}: {lines[i].rstrip()}")
+        # Try removing all .py source for cli.py and use original approach
+        return False
+
+    # Step 3: Create metadata
+    print("\n[3/5] Creating metadata...")
+    with open(os.path.join(HERE, "pyproject.toml"), "w") as f:
+        f.write("[build-system]\n")
+        f.write('requires = ["setuptools>=64,<75"]\n')
+        f.write('build-backend = "setuptools.build_meta"\n')
+        f.write("\n[project]\n")
+        f.write('name = "correctover"\n')
+        f.write('version = "1.0.2"\n')
+        f.write('description = "Correctover - Protocol-level contract validation with automatic verified failover for LLM APIs."\n')
+        f.write('readme = "README.md"\n')
+        f.write('requires-python = ">=3.8"\n')
+        f.write('license = {text = "Proprietary Commercial License"}\n')
+        f.write('keywords = ["llm","self-healing","failover","circuit-breaker","api-resilience","correctover"]\n')
+        f.write('authors = [{name = "Correctover Team", email = "team@correctover.com"}]\n')
+        f.write('classifiers = ["Development Status :: 5 - Production/Stable","Intended Audience :: Developers","License :: Other/Proprietary License","Operating System :: OS Independent","Programming Language :: Python :: 3"]\n')
+        f.write('dependencies = ["httpx>=0.24.0","aiohttp>=3.8.0"]\n')
+        f.write("\n[tool.setuptools.packages.find]\n")
+        f.write('include = ["correctover*"]\n')
+    print("  pyproject.toml")
+
+    with open(os.path.join(HERE, "LICENSE"), "w") as f:
+        f.write("PROPRIETARY COMMERCIAL LICENSE\nCopyright 2024-2026 Correctover Team. All rights reserved.\n")
+    with open(os.path.join(HERE, "README.md"), "w") as f:
+        f.write("# Correctover SDK\n\nClosed-source compiled package for LLM failover.\n")
+
+    # Step 4: Compile to .pyc
+    print("\n[4/5] Compiling to .pyc...")
+    # Remove .c / .pyd / .so
+    for root, dirs, fnames in os.walk(OUT_DIR):
+        for fn in fnames:
+            if fn.endswith((".c", ".pyd", ".so")):
+                os.remove(os.path.join(root, fn))
+
+    # Compile all .py
+    all_py = []
+    for root, dirs, fnames in os.walk(OUT_DIR):
+        for fn in fnames:
+            if fn.endswith(".py"):
+                all_py.append(os.path.join(root, fn))
+
+    ok, fail = 0, 0
+    for py_path in all_py:
+        try:
+            py_compile.compile(py_path, doraise=True)
+            ok += 1
+        except py_compile.PyCompileError as e:
+            fail += 1
+            print(f"  FAIL: {os.path.basename(py_path)}: {e}")
+    print(f"  Compiled: {ok}/{len(all_py)}")
+    if fail:
+        return False
+
+    # Move .pyc from __pycache__ to module dir
+    for root, dirs, fnames in os.walk(OUT_DIR):
+        pycache = os.path.join(root, "__pycache__")
+        if os.path.isdir(pycache):
+            for fn in os.listdir(pycache):
+                if fn.endswith(".pyc"):
+                    dst_name = fn.split(".")[0] + ".pyc"
+                    shutil.copy2(os.path.join(pycache, fn), os.path.join(root, dst_name))
+
+    # Remove all .py that are NOT __init__.py (keep __init__.py for package discovery)
+    removed = 0
+    for root, dirs, fnames in os.walk(OUT_DIR):
+        for fn in fnames:
+            if fn.endswith(".py") and fn != "__init__.py":
+                os.remove(os.path.join(root, fn))
+                removed += 1
+
+    # Remove __pycache__
+    for root, dirs, fnames in os.walk(OUT_DIR):
+        for d in dirs:
+            if d == "__pycache__":
+                shutil.rmtree(os.path.join(root, d))
+
+    print(f"  Removed {removed} .py sources, kept __init__.py")
+
+    # Count
+    pyc = 0
+    for root, dirs, fnames in os.walk(OUT_DIR):
+        for fn in fnames:
+            if fn.endswith(".pyc"): pyc += 1
+        for fn in fnames:
+            if fn == "__init__.py": print(f"  Pkg: {os.path.relpath(os.path.join(root, fn), OUT_DIR)}")
+    print(f"  Total .pyc: {pyc}")
+
+    # Verify find_packages
+    from setuptools import find_packages
+    os.chdir(HERE)
+    pkgs = find_packages()
+    print(f"  find_packages: {pkgs}")
+
+    # Step 5: Build wheel
+    print("\n[5/5] Building wheel...")
+    dist = os.path.join(HERE, "dist")
+    if os.path.exists(dist):
+        shutil.rmtree(dist)
+
+    import subprocess
+    result = subprocess.run(
+        [sys.executable, "-m", "build", "--wheel"],
+        cwd=HERE, capture_output=True, text=True, timeout=120
+    )
+    if result.returncode != 0:
+        print(f"  FAIL: {result.stderr[:500]}")
+        print(result.stdout[:500])
+        return False
+
+    for line in result.stdout.splitlines():
+        if any(w in line.lower() for w in ["error", "built", "success", "adding"]):
+            print(f"  {line}")
+
+    for f in sorted(glob.glob(os.path.join(dist, "*"))):
+        kb = os.path.getsize(f) / 1024
+        print(f"  OUT: {os.path.basename(f)} ({kb:.0f} KB)")
+
+    print("\nBUILD SUCCESS!")
+    return True
+
+
+if __name__ == "__main__":
+    sys.exit(0 if main() else 1)

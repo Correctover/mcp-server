@@ -110,6 +110,26 @@ go build -o correctover-mcp-server .
 # "command": "/path/to/correctover-mcp-server"
 ```
 
+### VS Code Extension
+
+Install the Correctover VS Code extension for a native editor experience:
+
+1. Download the `.vsix` from the [releases page](https://github.com/Correctover/mcp-server/releases) or build from source
+2. In VS Code, press `Ctrl+Shift+P` → `Extensions: Install from VSIX...`
+3. Select `correctover-vscode-1.0.0.vsix`
+4. Open the Command Palette and run **Correctover: Start MCP Server**
+5. Configure API keys in VS Code settings (`correctover.*Key`)
+6. Open the **Correctover** sidebar to see the real-time dashboard
+
+**Features:**
+- Start/stop/restart the MCP server from the command palette
+- Real-time dashboard with health, stats, and provider status
+- Status bar indicators
+- Configure providers directly in VS Code settings
+- Auto-start on launch (configurable)
+
+> Source: [vscode-extension/](vscode-extension/)
+
 ## Supported Providers
 
 Configure providers via environment variables. Only configured providers are active.
@@ -233,6 +253,36 @@ For team deployments, custom validation rules, or dedicated support:
 ## License
 
 Apache-2.0
+
+---
+
+## Project Map
+
+```
+correctover/
+├── main.go               # MCP Server 入口
+├── go.mod                # Go 模块
+├── smithery.yaml         # Smithery 部署
+├── glama.json            # Glama.ai 注册
+│
+├── mcp/                  # MCP 协议实现
+├── provider/             # 9 LLM Provider 管理
+├── validator/            # 6 维契约验证
+├── registry/             # MCP Registry 配置
+├── sdk/                  # Python SDK（编译分发版）
+├── vscode-extension/     # VS Code Extension
+├── web/                  # Web Demo（地球可视化/控制台）
+├── video/                # Remotion 品牌宣传视频
+├── marketing/            # BD 营销内容（文章/邮件/社媒/GEO）
+│   ├── articles/         #   博客文章
+│   ├── emails/           #   BD 获客邮件
+│   ├── social/           #   社交媒体
+│   ├── geo/              #   GEO 优化
+│   └── scripts/          #   自动化脚本
+├── docs/                 # 技术文档 & API 示例
+├── scripts/              # CI/构建脚本
+└── .github/workflows/    # GitHub Actions
+```
 
 ---
 

@@ -1,0 +1,186 @@
+{
+  "name": "correctover-vscode",
+  "displayName": "Correctover MCP",
+  "description": "MCP Reliability Layer for AI — Real-time LLM output verification and self-healing inside VS Code",
+  "version": "1.0.0",
+  "publisher": "Correctover",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Correctover/mcp-server"
+  },
+  "bugs": {
+    "url": "https://github.com/Correctover/mcp-server/issues"
+  },
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "icon": "media/icon.png",
+  "categories": [
+    "Other",
+    "Programming Languages",
+    "Machine Learning"
+  ],
+  "keywords": [
+    "mcp",
+    "llm",
+    "ai",
+    "validation",
+    "correctover",
+    "model-context-protocol"
+  ],
+  "activationEvents": [
+    "onCommand:correctover.start",
+    "onCommand:correctover.stop",
+    "onCommand:correctover.restart",
+    "onCommand:correctover.dashboard",
+    "onCommand:correctover.health",
+    "onCommand:correctover.stats",
+    "onCommand:correctover.configureProviders",
+    "onView:correctover.dashboard"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "correctover.start",
+        "title": "Correctover: Start MCP Server"
+      },
+      {
+        "command": "correctover.stop",
+        "title": "Correctover: Stop MCP Server"
+      },
+      {
+        "command": "correctover.restart",
+        "title": "Correctover: Restart MCP Server"
+      },
+      {
+        "command": "correctover.dashboard",
+        "title": "Correctover: Open Dashboard"
+      },
+      {
+        "command": "correctover.health",
+        "title": "Correctover: Check Provider Health"
+      },
+      {
+        "command": "correctover.stats",
+        "title": "Correctover: Show Session Stats"
+      },
+      {
+        "command": "correctover.configureProviders",
+        "title": "Correctover: Configure Providers"
+      }
+    ],
+    "configuration": {
+      "title": "Correctover",
+      "properties": {
+        "correctover.serverPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the correctover-mcp-server binary. If empty, searches PATH for 'correctover-server'."
+        },
+        "correctover.autoStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically start the Correctover MCP server when VS Code starts."
+        },
+        "correctover.openaiKey": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI API Key"
+        },
+        "correctover.anthropicKey": {
+          "type": "string",
+          "default": "",
+          "description": "Anthropic API Key"
+        },
+        "correctover.deepseekKey": {
+          "type": "string",
+          "default": "",
+          "description": "DeepSeek API Key"
+        },
+        "correctover.moonshotKey": {
+          "type": "string",
+          "default": "",
+          "description": "Moonshot API Key"
+        },
+        "correctover.zhipuKey": {
+          "type": "string",
+          "default": "",
+          "description": "Zhipu AI API Key"
+        },
+        "correctover.dashscopeKey": {
+          "type": "string",
+          "default": "",
+          "description": "Alibaba Qwen (DashScope) API Key"
+        },
+        "correctover.siliconflowKey": {
+          "type": "string",
+          "default": "",
+          "description": "SiliconFlow API Key"
+        },
+        "correctover.groqKey": {
+          "type": "string",
+          "default": "",
+          "description": "Groq API Key"
+        },
+        "correctover.togetherKey": {
+          "type": "string",
+          "default": "",
+          "description": "Together AI API Key"
+        },
+        "correctover.openaiBaseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI Base URL override (for proxies/mirrors)"
+        },
+        "correctover.anthropicBaseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Anthropic Base URL override"
+        },
+        "correctover.deepseekBaseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "DeepSeek Base URL override"
+        },
+        "correctover.enableMcpIntegration": {
+          "type": "boolean",
+          "default": true,
+          "description": "Register Correctover with VS Code's built-in MCP system (requires VS Code 1.95+)."
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "correctover-sidebar",
+          "title": "Correctover",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "correctover-sidebar": [
+        {
+          "type": "webview",
+          "id": "correctover.dashboard",
+          "name": "Dashboard"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package --no-dependencies",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.95.0",
+    "typescript": "^5.7.0",
+    "@vscode/vsce": "^3.0.0"
+  }
+}

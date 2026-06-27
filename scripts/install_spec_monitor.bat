@@ -1,0 +1,1 @@
+schtasks /CREATE /TN "Correctover\MCP Spec Monitor" /TR "C:\Program Files\Git\bin\bash.exe -l -c \"cd /c/d/workspace/correctover && bash scripts/check_mcp_spec_version.sh\"" /SC WEEKLY /D MON /ST 09:07 /F

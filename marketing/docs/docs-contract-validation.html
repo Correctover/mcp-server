@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contract Validation API — Correctover | 6-Dimension LLM Response Validation</title>
+<meta name="description" content="Correctover's 6-dimension contract validation: structure, schema, latency, cost, identity, and integrity checks for LLM API responses. API reference with code examples.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://correctover.com/docs/contract-validation.html">
+<meta property="og:title" content="Contract Validation — Correctover 6-Dimension API Reference">
+<meta property="og:description" content="Validate every LLM response across 6 dimensions before accepting it. P50=22µs, P99=99µs.">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#e8e8e8;background:#0a0a0f;}
+.container{max-width:900px;margin:0 auto;padding:40px 24px;}
+h1{font-size:2rem;margin-bottom:0.5rem;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+h2{font-size:1.4rem;margin:2rem 0 1rem;color:#93c5fd;}
+h3{font-size:1.1rem;margin:1.5rem 0 0.8rem;color:#bfdbfe;}
+p{color:#a0a0b0;margin-bottom:1rem;}
+a{color:#60a5fa;text-decoration:none;}
+a:hover{text-decoration:underline;}
+pre{background:#0d0d14;border:1px solid #1e293b;border-radius:8px;padding:16px;overflow-x:auto;margin:1rem 0;font-size:0.85rem;color:#e2e8f0;}
+code{background:#1e293b;padding:2px 6px;border-radius:4px;font-size:0.85rem;}
+pre code{background:transparent;padding:0;}
+table{width:100%;border-collapse:collapse;margin:1rem 0;}
+th{text-align:left;padding:10px 12px;background:#111827;color:#93c5fd;font-size:0.85rem;}
+td{padding:10px 12px;border-top:1px solid #1e293b;color:#a0a0b0;font-size:0.9rem;}
+.header{border-bottom:1px solid #1e293b;padding-bottom:1rem;margin-bottom:2rem;}
+.header a{color:#94a3b8;margin-right:1.5rem;font-size:0.9rem;}
+.note{background:#111827;border-left:3px solid #60a5fa;padding:12px 16px;margin:1rem 0;border-radius:0 8px 8px 0;color:#94a3b8;font-size:0.9rem;}
+.footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid #1e293b;color:#64748b;font-size:0.85rem;}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+  <a href="https://correctover.com/">← Home</a>
+  <a href="/docs/">Docs</a>
+</div>
+
+<h1>✓ Contract Validation API</h1>
+<p>Correctover validates every LLM response across <strong>6 dimensions</strong> before accepting it. This is the core differentiator: standard failover checks HTTP 200. Correctover verifies the contract. P50 = 22µs, P99 = 99µs.</p>
+
+<h2>Contract Types</h2>
+
+<table>
+<tr><th>Contract</th><th>Dimension</th><th>What It Validates</th><th>P50</th></tr>
+<tr><td><code>Contract.structure()</code></td><td>Structure</td><td>JSON schema compliance, required fields</td><td>8µs</td></tr>
+<tr><td><code>Contract.schema()</code></td><td>Schema</td><td>Field types match expected schema</td><td>5µs</td></tr>
+<tr><td><code>Contract.latency()</code></td><td>Latency</td><td>Response time within SLA threshold</td><td>1µs</td></tr>
+<tr><td><code>Contract.cost()</code></td><td>Cost</td><td>Token usage within budget</td><td>2µs</td></tr>
+<tr><td><code>Contract.identity()</code></td><td>Identity</td><td>Model identity matches (no substitution)</td><td>3µs</td></tr>
+<tr><td><code>Contract.integrity()</code></td><td>Integrity</td><td>Semantic coherence, no hallucinations</td><td>22µs</td></tr>
+</table>
+
+<h2>Contract.Structure</h2>
+<p>Validates that the response conforms to a JSON Schema definition. Catches missing fields, wrong field types, and malformed responses.</p>
+<pre><code>Contract.structure(
+    name="output_shape",
+    schema={
+        "type": "object",
+        "properties": {
+            "answer": {"type": "string"},
+            "confidence": {"type": "number"},
+            "citations": {
+                "type": "array",
+                "items": {"type": "string"},
+                "minItems": 1
+            }
+        },
+        "required": ["answer", "confidence"]
+    }
+)</code></pre>
+
+<h2>Contract.Schema</h2>
+<p>Detects when the response structure drifts from the expected type — e.g. a provider returns Markdown instead of JSON, or changes field types.</p>
+<pre><code>Contract.schema(
+    name="field_types",
+    field_types={
+        "temperature": float,
+        "steps": list,
+        "metadata.duration_ms": (int, float),
+    }
+)</code></pre>
+
+<h2>Contract.Latency</h2>
+<p>Enforces response time SLAs. If a provider's response exceeds the threshold, it counts as a contract failure and triggers failover.</p>
+<pre><code>Contract.latency(
+    name="p95_sla",
+    max_ms=5000,        # Soft threshold
+    hard_max_ms=10000,   # Hard cutoff
+)</code></pre>
+
+<h2>Contract.Cost</h2>
+<p>Prevents cost overruns from unexpected token usage. Particularly useful when failover lands on a more expensive model.</p>
+<pre><code>Contract.cost(
+    name="budget",
+    max_cents=2.0,
+    alert_on_exceed=True,
+)</code></pre>
+
+<h2>Contract.Identity</h2>
+<p>Verifies the responding model matches what was requested. Detects silent model substitution — when a provider serves a cheaper model than billed.</p>
+<pre><code>Contract.identity(
+    name="model_check",
+    expected="gpt-4o-2024-11-20",
+    allow_aliases=True,  # gpt-4o-2024-08-06 also OK
+)</code></pre>
+
+<h2>Contract.Integrity</h2>
+<p>The most advanced dimension. Uses semantic coherence checks to detect hallucinations, contradictions, and nonsensical output.</p>
+<pre><code>Contract.integrity(
+    name="semantic_check",
+    anti_hallucination=True,
+    self_consistency=True,
+    coherence_threshold=0.7,
+)</code></pre>
+
+<h2>Combining Contracts</h2>
+<p>Multiple contracts run in parallel on each response. All must pass for the response to be <code>validated=True</code>.</p>
+<pre><code>response = provider.complete(
+    messages=[...],
+    contracts=[
+        Contract.structure("format", output_schema),
+        Contract.latency("sla", max_ms=5000),
+        Contract.cost("budget", max_cents=1.0),
+    ]
+)
+if response.validated:
+    # All 3 contracts passed
+    print(response.metrics.contract_results)
+    # → {"format": True, "sla": True, "budget": True}</code></pre>
+
+<div class="note">
+<strong>Performance note:</strong> Contract validation runs in-process with zero external calls. The full 6-dimension validation suite completes in 22µs (P50) / 99µs (P99) — less than 0.01% of a typical LLM API call's latency budget.
+</div>
+
+<div class="footer">
+  <p>© 2026 Correctover可瑞沃 — Enterprise AI Reliability Infrastructure</p>
+</div>
+</div>
+</body>
+</html>
