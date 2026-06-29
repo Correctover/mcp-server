@@ -69,3 +69,4 @@ vscode-extension/master_key.hex
 /workflow_*.js
 *.output.json
 bash.exe.stackdump
+build/
