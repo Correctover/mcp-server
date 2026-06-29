@@ -113,9 +113,9 @@ def copy_and_rename():
                 f'version = __version__\n')
     print(f"  [OVERRIDE] _version.py (v{VERSION})")
 
-    # _fixes2.py — use repo version if available
+    # _fixes2.py — use repo version if available (maintained separately from NB)
     fixes2_src = os.path.join(OUT_DIR, "_fixes2.py")
-    fixes2_repo = os.path.join(HERE, "correctover", "_fixes2.py")
+    fixes2_repo = os.path.join(HERE, "_fixes2_repo.py")
     if os.path.exists(fixes2_repo):
         shutil.copy2(fixes2_repo, fixes2_src)
         print(f"  [OVERRIDE] _fixes2.py (from repo)")
@@ -125,9 +125,11 @@ def copy_and_rename():
     # __init__.py — use repo version which has the _apply_patches calls
     init_src = os.path.join(OUT_DIR, "__init__.py")
     init_repo = os.path.join(HERE, "correctover", "__init__.py")
-    if os.path.exists(init_repo):
+    if os.path.exists(init_repo) and os.path.realpath(init_repo) != os.path.realpath(init_src):
         shutil.copy2(init_repo, init_src)
         print(f"  [OVERRIDE] __init__.py (from repo, with _apply_patches calls)")
+    elif os.path.realpath(init_repo) == os.path.realpath(init_src):
+        print(f"  [SKIP] __init__.py already in place (same file)")
     else:
         print(f"  [WARN] __init__.py not found in repo, keeping NB version")
 
@@ -145,26 +147,20 @@ name = "correctover"
 version = "{VERSION}"
 description = "Correctover — Failure is not fatal. Protocol-level contract validation with automatic verified failover for LLM APIs."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 license = {{text = "Proprietary Commercial License — see LICENSE"}}
 keywords = ["llm", "self-healing", "failover", "circuit-breaker", "api-resilience", "openai", "anthropic", "deepseek", "contract-validation", "correctover", "ai-gateway", "semantic-verification"]
 authors = [{{name = "Correctover Team", email = "team@correctover.com"}}]
 maintainers = [{{name = "Correctover Team", email = "team@correctover.com"}}]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
-    "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: Other/Proprietary License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: System :: Networking",
 ]
 dependencies = ["httpx>=0.24.0", "aiohttp>=3.8.0"]
 
