@@ -6,13 +6,13 @@
     "url": "https://github.com/Correctover/mcp-server",
     "source": "github"
   },
-  "version": "1.0.4",
+  "version": "1.0.3",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseURL": "https://registry.npmjs.org",
       "identifier": "correctover-mcp-server",
-      "version": "1.0.4",
+      "version": "1.0.3",
       "transport": {
         "type": "stdio"
       },
