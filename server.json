@@ -1,6 +1,6 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.correctover/correctover-mcp-server",
+  "name": "io.github.Correctover/correctover-mcp-server",
   "description": "AI output validation with 6-dimension checks and self-healing failover across 9+ LLM providers.",
   "repository": {
     "url": "https://github.com/Correctover/mcp-server",
