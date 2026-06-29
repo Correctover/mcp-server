@@ -54,7 +54,7 @@ jobs:
           GOARCH: ${{ matrix.arch }}
         run: |
           go build -ldflags="-s -w \
-            -X github.com/Correctover/mcp-server/license.defaultHMACSecret=${{ secrets.CORRECTOVER_HMAC_SECRET || 'correctover-mcp-hmac-v1-2026' }}" \
+            -X github.com/Correctover/mcp-server/license.defaultHMACSecret=${{ secrets.CORRECTOVER_HMAC_SECRET }}" \
             -o correctover-mcp-${{ matrix.suffix }} .
           chmod +x correctover-mcp-${{ matrix.suffix }}
 
