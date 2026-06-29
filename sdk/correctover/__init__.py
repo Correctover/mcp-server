@@ -1,7 +1,7 @@
 # Copyright 2024-2026 Correctover Team
 # Licensed under the Apache License, Version 2.0 (the "License")
 # Correctover™ — Proprietary MAPE-K Adaptive Loop Architecture
-# Patent Pending. See NOTICE file for full IP attribution.
+
 #
 """Correctover SDK — Agent stability SDK. Smart routing, auto-failover, crash recovery."""
 from correctover._version import __version__
@@ -110,6 +110,12 @@ _lazy = {
     "CheckpointStore": ("correctover.checkpoint", "CheckpointStore"),
     "FileCheckpointStore": ("correctover.checkpoint", "FileCheckpointStore"),
     "MemoryCheckpointStore": ("correctover.checkpoint", "MemoryCheckpointStore"),
+    # Cloud Kill-Switch (v4.3)
+    "CloudKillGuardian": ("correctover.cloudkill", "CloudKillGuardian"),
+    "detect_tamper": ("correctover.cloudkill", "detect_tamper"),
+    "report_tamper": ("correctover.cloudkill", "report_tamper"),
+    "check_revoked": ("correctover.cloudkill", "check_revoked"),
+    "quick_check": ("correctover.cloudkill", "quick_check"),
     # Telemetry
     "ping": ("correctover._ping", "ping"),
     # Carbon Tracker (v4.4.2)
@@ -125,6 +131,14 @@ _lazy = {
     "stop_dashboard": ("correctover.dashboard", "stop_dashboard"),
     "dashboard_url": ("correctover.dashboard", "dashboard_url"),
     "dashboard_status": ("correctover.dashboard", "dashboard_status"),
+    # Agent Chain Correctover™ (v5.3.0)
+    "ChainBuilder": ("correctover.chain", "ChainBuilder"),
+    "AgentChain": ("correctover.chain", "AgentChain"),
+    "AgentNode": ("correctover.chain", "AgentNode"),
+    "NodeResult": ("correctover.chain", "NodeResult"),
+    "ChainContext": ("correctover.chain", "ChainContext"),
+    "ChainResult": ("correctover.chain", "ChainResult"),
+    "CompensationStrategy": ("correctover.chain", "CompensationStrategy"),
 }
 
 __all__ = list(_lazy.keys()) + ["checkup"]
@@ -156,7 +170,7 @@ import os as _os
 if _os.environ.get("CORRECTOVER_TELEMETRY") != "1":
     _os.environ["CORRECTOVER_TELEMETRY"] = "0"
 if not _os.environ.get("CORRECTOVER_TELEMETRY_URL"):
-    _os.environ["CORRECTOVER_TELEMETRY_URL"] = "https://license-api-correctover-hk-rewfrmblft.cn-hongkong.fcapp.run/api/v1/telemetry"
+    _os.environ["CORRECTOVER_TELEMETRY_URL"] = "https://license-api-correctover-hk.oss-cn-hongkong.aliyuncs.com/api/v1/telemetry"
 
 # ── Auto-ping on import (only if telemetry is opted-in) ─────────
 if _os.environ.get("CORRECTOVER_TELEMETRY") == "1":
@@ -205,7 +219,17 @@ except Exception:
     _track_flush = None
 
 
-# ── Step 2-5: Security init — removed in Open Core v5.7.0 ─────
+# ── Step 2-5: Security init (compiled — logic not readable) ────
+try:
+    from correctover._security import init as _security_init
+    _security_init()
+except ImportError as _e:
+    import sys as _sys
+    if "cpython" in str(_e).lower() or "magic" in str(_e).lower():
+        print(f"[Correctover] WARNING: _security module incompatible with Python {_sys.version_info.major}.{_sys.version_info.minor}. "
+              f"Security init skipped. Reinstall from source: pip install --no-binary correctover-sdk correctover-sdk", file=_sys.stderr)
+except Exception:
+    pass
 
 
 # ── Step 6: Flush pending tracker events ───────────────────────
@@ -216,7 +240,14 @@ except Exception:
     pass
 
 
-# ── Step 7: Cloud Kill-Switch — removed in Open Core v5.7.0 ────
+# ── Step 7: Cloud Kill-Switch guardian ─────────────────────────
+# Background thread: periodically checks for tampering + cloud revocation
+try:
+    from correctover.cloudkill import CloudKillGuardian
+    if _os.environ.get("CORRECTOVER_CLOUDKILL", "0") == "1":  # [FIXED] opt-in
+        CloudKillGuardian.start(interval=3600)
+except Exception:
+    pass
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -263,16 +294,17 @@ def run(prompt="", provider="", **kwargs):
 # ── Apply runtime patches for known bugs ──────────────────────────
 # Bug #2 (latency), #3 (5xx), and the historical fixes in _fixes.pyc
 # are applied here at import time.
+import os as _patch_os
 try:
     from correctover._fixes import _apply_patches as _apply_fixes
     _apply_fixes()
 except Exception as _fix_err:
-    if _os.environ.get("CORRECTOVER_DEBUG"):
+    if _patch_os.environ.get("CORRECTOVER_DEBUG"):
         print(f"[Correctover] _fixes load warning: {_fix_err}")
 
 try:
     from correctover._fixes2 import _apply_patches as _apply_fixes2
     _apply_fixes2()
 except Exception as _fix2_err:
-    if _os.environ.get("CORRECTOVER_DEBUG"):
+    if _patch_os.environ.get("CORRECTOVER_DEBUG"):
         print(f"[Correctover] _fixes2 load warning: {_fix2_err}")

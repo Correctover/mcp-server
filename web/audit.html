@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>LLM Output Reliability Audit · Correctover</title>
+<meta name="description" content="Free 30-minute LLM reliability diagnosis. We audit your API calls for failure patterns, model drift, and silent errors. Get a written report with prioritized fixes.">
+<style>
+:root {
+  --bg: #08080f;
+  --surface: #0d0d1a;
+  --surface2: #111122;
+  --surface3: #161630;
+  --border: #1a1a2e;
+  --border-light: #282848;
+  --text: #e8e8f0;
+  --muted: #606080;
+  --muted-light: #8080a0;
+  --cyan: #00d4b0;
+  --cyan-dim: rgba(0,212,176,0.08);
+  --cyan-glow: rgba(0,212,176,0.15);
+  --indigo: #5555dd;
+  --red: #ff4466;
+  --red-dim: rgba(255,68,102,0.08);
+  --amber: #ffaa33;
+  --amber-dim: rgba(255,170,51,0.1);
+  --green: #00d4b0;
+  --radius: 6px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(8,8,15,0.85); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+nav {
+  max-width: 1100px; margin: 0 auto; padding: 0 24px;
+  height: 56px; display: flex; align-items: center; justify-content: space-between;
+}
+.logo { font-weight: 700; font-size: 18px; color: var(--text); letter-spacing: -0.3px; }
+.logo em { font-style: normal; color: var(--cyan); }
+.nav-links { display: flex; gap: 24px; align-items: center; }
+.nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color 0.15s; }
+.nav-links a:hover { color: var(--text); }
+.nav-links .btn-small {
+  padding: 6px 14px; border-radius: var(--radius); font-size: 13px; font-weight: 600;
+  background: var(--cyan); color: #08080f; transition: opacity 0.15s;
+}
+.nav-links .btn-small:hover { opacity: 0.9; color: #08080f; }
+.container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 24px; border-radius: var(--radius); font-size: 15px; font-weight: 600;
+  text-decoration: none; cursor: pointer; border: none; font-family: inherit;
+  transition: all 0.15s;
+}
+.btn-primary { background: var(--cyan); color: #08080f; }
+.btn-primary:hover { opacity: 0.9; text-decoration: none; }
+.btn-large { padding: 14px 32px; font-size: 17px; }
+a { color: var(--cyan); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Hero */
+.hero {
+  padding: 140px 0 60px;
+  border-bottom: 1px solid var(--border);
+}
+.hero .tag {
+  display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--amber); margin-bottom: 20px;
+  padding: 6px 14px; border: 1px solid var(--amber-dim); border-radius: 20px;
+  background: var(--amber-dim);
+}
+.hero h1 {
+  font-size: clamp(32px, 4.5vw, 52px); font-weight: 800; letter-spacing: -1.2px;
+  line-height: 1.15; margin-bottom: 16px; max-width: 750px;
+}
+.hero .subtitle {
+  font-size: 18px; color: var(--muted); max-width: 650px; margin-bottom: 32px; line-height: 1.7;
+}
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 40px; }
+.hero .trust-row {
+  display: flex; gap: 24px; flex-wrap: wrap; font-size: 14px; color: var(--muted-light);
+}
+.hero .trust-row span { display: flex; align-items: center; gap: 6px; }
+
+/* Sections */
+section { padding: 80px 0; }
+section + section { border-top: 1px solid var(--border); }
+h2 { font-size: 32px; font-weight: 700; letter-spacing: -0.4px; margin-bottom: 16px; }
+h2 .hl { color: var(--cyan); }
+h2 .hl-amber { color: var(--amber); }
+p.desc { color: var(--muted); font-size: 16px; max-width: 600px; margin-bottom: 40px; }
+
+/* How it works */
+.steps { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-top: 40px; }
+.step { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 28px; }
+.step .num { font-size: 32px; font-weight: 800; color: var(--cyan); margin-bottom: 12px; }
+.step h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+.step p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+@media (max-width: 720px) { .steps { grid-template-columns: 1fr; } }
+
+/* What we check */
+.check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 32px; }
+.check-item {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 20px; display: flex; gap: 14px; align-items: flex-start;
+}
+.check-item .icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+.check-item h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.check-item p { font-size: 13px; color: var(--muted); margin-bottom: 0; }
+@media (max-width: 720px) { .check-grid { grid-template-columns: 1fr; } }
+
+/* Pricing */
+.pricing-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 32px; }
+.pricing-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl);
+  padding: 32px;
+}
+.pricing-card.featured { border-color: var(--cyan); background: var(--surface2); }
+.pricing-card .plan { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 4px; }
+.pricing-card .price { font-size: 36px; font-weight: 800; margin-bottom: 8px; }
+.pricing-card .price small { font-size: 16px; font-weight: 400; color: var(--muted); }
+.pricing-card .perks { list-style: none; padding: 0; margin-top: 20px; }
+.pricing-card .perks li { padding: 8px 0; border-top: 1px solid var(--border); font-size: 14px; display: flex; gap: 8px; }
+.pricing-card .perks li:last-child { border-bottom: 1px solid var(--border); }
+@media (max-width: 720px) { .pricing-row { grid-template-columns: 1fr; } }
+
+/* Testimonials placeholder */
+.testimonial {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl);
+  padding: 28px; margin-top: 24px; font-size: 15px; color: var(--muted); line-height: 1.7;
+}
+.testimonial strong { color: var(--text); }
+
+/* FAQ */
+.faq-item {
+  border-bottom: 1px solid var(--border); padding: 20px 0;
+}
+.faq-item h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; cursor: pointer; }
+.faq-item p { font-size: 14px; color: var(--muted); margin-bottom: 0; line-height: 1.6; }
+
+/* CTA */
+.cta-section {
+  padding: 80px 0; text-align: center;
+  border-top: 1px solid var(--border);
+}
+.cta-section h2 { font-size: 36px; margin-bottom: 12px; }
+.cta-section p { color: var(--muted); font-size: 16px; margin-bottom: 28px; }
+
+footer {
+  border-top: 1px solid var(--border); padding: 32px 0;
+  text-align: center; font-size: 13px; color: var(--muted);
+}
+</style>
+</head>
+<body>
+
+<header>
+<nav>
+  <a href="index.html" class="logo">&lt;<em>c</em>&gt; Correctover</a>
+  <div class="nav-links">
+    <a href="index.html#features">Features</a>
+    <a href="index.html#pricing">Pricing</a>
+    <a href="audit.html" style="color:var(--cyan);">Audit</a>
+    <a href="https://github.com/correctover" target="_blank">GitHub</a>
+    <a href="checkout.html" class="btn-small">Subscribe</a>
+  </div>
+</nav>
+</header>
+
+<!-- Hero -->
+<section class="hero">
+<div class="container">
+  <div class="tag">NEW — Free LLM Reliability Diagnosis</div>
+  <h1>Your AI calls are failing silently.<br>We'll show you where.</h1>
+  <p class="subtitle">Free 30-minute audit of your LLM API usage. We analyze your failure patterns, model drift, provider health, and silent errors — then give you a written report with prioritized fixes.</p>
+  <div class="hero-actions">
+    <a href="mailto:wangguigui@correctover.com?subject=LLM%20Reliability%20Audit%20Request&body=I%20want%20a%20free%2030-minute%20LLM%20reliability%20diagnosis.%20Here's%20my%20setup:%20(paste%20your%20API%20config%20or%20describe%20your%20stack)" class="btn btn-primary btn-large">&#8594; Book Free Diagnosis</a>
+    <a href="#how" class="btn btn-primary" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);">How it works</a>
+  </div>
+  <div class="trust-row">
+    <span>No credit card</span>
+    <span>No commitment</span>
+    <span>Written report included</span>
+    <span>48-hour turnaround</span>
+  </div>
+</div>
+</section>
+
+<!-- How it works -->
+<section id="how">
+<div class="container">
+  <h2>How the <span class="hl">audit</span> works</h2>
+  <p class="desc">Three steps, five days, one clear report.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="num">01</div>
+      <h3>You share your setup</h3>
+      <p>Tell us which LLM providers you use, your API call patterns, and any incidents you've had. No source code needed — just config and logs.</p>
+    </div>
+    <div class="step">
+      <div class="num">02</div>
+      <h3>We diagnose</h3>
+      <p>We run our Correctover engine against your providers: latency profiling, failure injection, model drift detection, and 6-dimension contract validation.</p>
+    </div>
+    <div class="step">
+      <div class="num">03</div>
+      <h3>You get a report</h3>
+      <p>A written document showing: failure patterns found, estimated cost of silent errors, prioritized fix list, and a recommendation on whether Correctover fits your stack.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- What we check -->
+<section>
+<div class="container">
+  <h2>What we <span class="hl">check</span></h2>
+  <p class="desc">Most teams only see HTTP 200. We look 6 levels deeper.</p>
+  <div class="check-grid">
+    <div class="check-item">
+      <div class="icon">&#9888;</div>
+      <div><h4>Provider Failure Patterns</h4><p>429 rate, timeout distribution, error code breakdown per provider. You might be retrying silently 100x/day.</p></div>
+    </div>
+    <div class="check-item">
+      <div class="icon">&#8593;</div>
+      <div><h4>Model Drift</h4><p>Is gpt-4o responding differently than last month? We measure semantic consistency over time.</p></div>
+    </div>
+    <div class="check-item">
+      <div class="icon">&#36;</div>
+      <div><h4>Cost Leakage</h4><p>Are failovers routing to expensive models? Is your retry logic burning tokens on dead endpoints?</p></div>
+    </div>
+    <div class="check-item">
+      <div class="icon">&#10060;</div>
+      <div><h4>Silent Errors</h4><p>API returned 200 but JSON was missing fields, model was swapped, or content was semantically wrong. We find these.</p></div>
+    </div>
+    <div class="check-item">
+      <div class="icon">&#8635;</div>
+      <div><h4>Retry Health</h4><p>Your existing retry logic — is it making things worse? Exponential backoff with no jitter can hammer ailing endpoints.</p></div>
+    </div>
+    <div class="check-item">
+      <div class="icon">&#128200;</div>
+      <div><h4>Failover Readiness</h4><p>If your primary provider goes down, can you actually switch? We test your fallback chain end-to-end.</p></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- Pricing -->
+<section>
+<div class="container">
+  <h2>Pricing</h2>
+  <p class="desc">Start with a free diagnosis. Pay only if you want the deep dive.</p>
+  <div class="pricing-row">
+    <div class="pricing-card">
+      <div class="plan">Free Diagnosis</div>
+      <div class="price">$0 <small>one-time</small></div>
+      <p style="font-size:14px;color:var(--muted);">30-minute session. Summary report with top 3 findings.</p>
+      <ul class="perks">
+        <li>&#10003; Provider connectivity check</li>
+        <li>&#10003; Top 3 failure patterns identified</li>
+        <li>&#10003; Written summary report</li>
+        <li>&#10003; 48-hour turnaround</li>
+        <li>&#10003; No credit card needed</li>
+      </ul>
+      <a href="mailto:wangguigui@correctover.com?subject=Free%20LLM%20Reliability%20Audit" class="btn btn-primary" style="margin-top:20px;width:100%;justify-content:center;">Book Free Diagnosis</a>
+    </div>
+    <div class="pricing-card featured">
+      <div class="plan">Deep Reliability Audit</div>
+      <div class="price">$150 <small>/hour</small></div>
+      <p style="font-size:14px;color:var(--muted);">Full analysis with written report, fix recommendations, and 1-hour walkthrough.</p>
+      <ul class="perks">
+        <li>&#10003; Everything in Free</li>
+        <li>&#10003; Full 6-dimension contract validation</li>
+        <li>&#10003; Provider failover drill (live test)</li>
+        <li>&#10003; Cost leakage analysis</li>
+        <li>&#10003; Prioritized fix roadmap</li>
+        <li>&#10003; 1-hour walkthrough call</li>
+        <li>&#10003; Recommended architecture diagram</li>
+      </ul>
+      <a href="mailto:wangguigui@correctover.com?subject=Deep%20Reliability%20Audit%20Request" class="btn btn-primary" style="margin-top:20px;width:100%;justify-content:center;">Book Deep Audit</a>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- Who this is for -->
+<section>
+<div class="container">
+  <h2>This is for you if <span class="hl-amber">...</span></h2>
+  <div class="testimonial">
+    <p><strong>"Our gpt-4o calls are failing 5% of the time and I don't know why."</strong><br>
+    — Engineering Lead at a legal AI startup (10-person team, 3 providers)
+    </p>
+  </div>
+  <div class="testimonial">
+    <p><strong>"We have retry logic but I'm not sure it's working. Users report errors but our dashboards show green."</strong><br>
+    — CTO at a fintech company (50-person team, 2 providers)
+    </p>
+  </div>
+  <div class="testimonial">
+    <p><strong>"We're adding a second provider for redundancy and I need to know what breaks when we switch."</strong><br>
+    — Tech Lead at an AI agent platform (20-person team, migrating to multi-provider)
+    </p>
+  </div>
+</div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+<div class="container">
+  <h2>Stop guessing. <span class="hl">Start measuring.</span></h2>
+  <p>Free 30-minute diagnosis. No commitment. Written report included.</p>
+  <a href="mailto:wangguigui@correctover.com?subject=LLM%20Reliability%20Audit%20Request" class="btn btn-primary btn-large">&#8594; Book Your Free Diagnosis</a>
+</div>
+</section>
+
+<!-- Footer -->
+<footer>
+<div class="container">
+  <p>Correctover &mdash; LLM Reliability Engineering &middot; <a href="index.html">Home</a> &middot; <a href="checkout.html">Subscribe</a> &middot; <a href="mailto:wangguigui@correctover.com">Contact</a></p>
+</div>
+</footer>
+
+</body>
+</html>

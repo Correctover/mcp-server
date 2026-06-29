@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 # PYTHONIOENCODING=utf-8
 #
-# Correctover SDK — self-contained CI build script.
+# Correctover SDK — Python version matrix build script.
 #
-# Builds from the monorepo's own sdk/correctover/ source (already
-# namespace-replaced).  No external checkout needed.
+# Builds from correctover package source (sdk/correctover/).
+# No vendoring needed — the namespace-replaced source is tracked in git.
 #
 # Usage:
-#   ./scripts/build_matrix.sh 3.11        # compile & build wheel for Py 3.11
 #   ./scripts/build_matrix.sh 3.12        # compile & build wheel for Py 3.12
 #
 # Environment:
@@ -27,10 +26,14 @@ fi
 
 # ── Paths ────────────────────────────────────────────────────────────
 HERE="$(cd "$(dirname "$0")/.." && pwd -W 2>/dev/null || cd "$(dirname "$0")/.." && pwd)"
-SRC_PKG="$HERE/correctover"               # already-namespaced source
+SRC_PKG="$HERE/correctover"                # canonical correctover source
 TMPDIR="${TMPDIR:-/tmp}/correctover-build-$(date +%s)-$$"
 DIST_DIR="$HERE/dist"
 VERSION="${CORRECTOVER_VERSION:-1.3.0}"
+
+# Python tag — prevents pip from installing .pyc wheels on wrong version
+# e.g. "cp312" for Python 3.12
+PY_TAG="cp${PY_VER//./}"
 
 # ── Locate the target Python interpreter ─────────────────────────────
 PYTHON=""
@@ -55,48 +58,32 @@ fi
 echo "============================================================"
 echo " Correctover SDK v$VERSION  |  Python $PY_VER  |  $PYTHON"
 echo " Source: $SRC_PKG"
+echo " Tag:    $PY_TAG"
 echo " Target: $TMPDIR"
 echo "============================================================"
 
 # ── Step 0: Clean ────────────────────────────────────────────────────
 rm -rf "$TMPDIR" "$DIST_DIR"
 
-# ── Step 1: Copy source files ────────────────────────────────────────
+# ── Step 1: Copy source to temp dir ─────────────────────────────────
 echo ""
-echo "[1/6] Copying .py files from monorepo source..."
+echo "[1/5] Copying source files from $SRC_PKG..."
 if [ ! -d "$SRC_PKG" ]; then
-    echo "ERROR: Source directory not found: $SRC_PKG" >&2
+    echo "ERROR: Source not found: $SRC_PKG" >&2
     exit 1
 fi
 
-# Copy via Python for cross-platform path handling
-"$PYTHON" << PYEOF
-import os, shutil
+mkdir -p "$TMPDIR"
+cp -r "$SRC_PKG"/* "$TMPDIR/"
+# Remove __pycache__ from the copy
+find "$TMPDIR" -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
+echo "  [COPY] Source copied to $TMPDIR"
 
-src_pkg = r"$SRC_PKG".replace("\\", "/")
-tmpdir = r"$TMPDIR".replace("\\", "/")
-
-for root, dirs, fnames in os.walk(src_pkg):
-    if "__pycache__" in root:
-        continue
-    for f in fnames:
-        if not f.endswith(".py"):
-            continue
-        src = os.path.join(root, f).replace("\\", "/")
-        rel = os.path.relpath(src, src_pkg).replace("\\", "/")
-        dst = os.path.join(tmpdir, rel).replace("\\", "/")
-        os.makedirs(os.path.dirname(dst), exist_ok=True)
-        shutil.copy2(src, dst)
-        print(f"  [COPY] {rel}")
-
-print(f"  Done – source files copied to {tmpdir}")
-PYEOF
-
-# ── Step 2: Write correctover-specific source files ─────────────────
+# ── Step 2: Override correctover-specific files ────────────────────
 echo ""
-echo "[2/6] Creating correctover-specific source files..."
+echo "[2/5] Overriding version and patches..."
 
-# _version.py
+# _version.py with build version
 cat > "$TMPDIR/_version.py" << EOF
 # Copyright 2024-2026 Correctover Team
 # Proprietary Commercial License
@@ -104,27 +91,14 @@ cat > "$TMPDIR/_version.py" << EOF
 __version__ = "$VERSION"
 version = __version__
 EOF
-echo "  [CREATE] _version.py (v$VERSION)"
+echo "  [OVERRIDE] _version.py (v$VERSION)"
 
-# _fixes2.py — from repo (sdk/_fixes2_repo.py)
-FIXES2_REPO="$(dirname "$HERE")/_fixes2_repo.py"
-if [ -f "$FIXES2_REPO" ]; then
-    cp "$FIXES2_REPO" "$TMPDIR/_fixes2.py"
-    echo "  [COPY]  _fixes2.py (from sdk/_fixes2_repo.py)"
-elif [ -f "$SRC_PKG/_fixes2.py" ]; then
-    cp "$SRC_PKG/_fixes2.py" "$TMPDIR/_fixes2.py"
-    echo "  [COPY]  _fixes2.py (from package)"
-fi
-
-# __init__.py — from repo (has _apply_patches calls)
-if [ -f "$SRC_PKG/__init__.py" ]; then
-    cp "$SRC_PKG/__init__.py" "$TMPDIR/__init__.py"
-    echo "  [COPY]  __init__.py (from repo)"
-fi
+echo "  [OK]  Using _fixes2.py from source (already tracked in correctover/)"
+echo "  [OK]  Using __init__.py from source (with _apply_patches calls)"
 
 # ── Step 3: Compile .py → .pyc ──────────────────────────────────────
 echo ""
-echo "[3/6] Compiling .py -> .pyc with Python $PY_VER..."
+echo "[3/5] Compiling .py -> .pyc with Python $PY_VER..."
 
 COMPILE_OK=$("$PYTHON" -c "
 import os, py_compile, sys
@@ -136,7 +110,7 @@ for root, dirs, files in os.walk(pkg):
         if not f.endswith('.py'):
             continue
         if f == '__init__.py':
-            continue   # keep __init__.py as source
+            continue
         path = os.path.join(root, f)
         try:
             py_compile.compile(path, doraise=True)
@@ -150,7 +124,7 @@ if fail:
 " 2>&1)
 echo "  $COMPILE_OK"
 
-# Move .pyc from __pycache__ subdirs to package dir level
+# Move .pyc from __pycache__
 find "$TMPDIR" -name '__pycache__' -type d | while read -r pc; do
     parent="$(dirname "$pc")"
     for f in "$pc"/*.pyc; do
@@ -162,9 +136,9 @@ find "$TMPDIR" -name '__pycache__' -type d | while read -r pc; do
 done
 echo "  [OK]  .pyc files moved from __pycache__"
 
-# ── Step 4: Strip absolute paths from .pyc ───────────────────────────
+# ── Step 4: Strip paths from .pyc ────────────────────────────────────
 echo ""
-echo "[4/6] Stripping absolute paths from .pyc..."
+echo "[4/5] Stripping absolute paths from .pyc..."
 export CORRECTOVER_BUILD_TMPDIR="$TMPDIR"
 "$PYTHON" << 'PYEOF'
 import os, marshal, struct
@@ -203,9 +177,8 @@ for root, dirs, files in os.walk(pkg):
         fpath = os.path.join(root, fn)
         with open(fpath, 'rb') as fh:
             data = fh.read()
-        magic = data[:4]
         flags = struct.unpack('<I', data[4:8])[0]
-        header = 16  # same for 3.11 and 3.12
+        header = 16
         body = data[header:]
         try:
             code = marshal.loads(body)
@@ -218,15 +191,11 @@ for root, dirs, files in os.walk(pkg):
         print(f"  [STRIP] {fn}")
 PYEOF
 
-# ── Step 5: Remove .py files (keep __init__.py) ──────────────────────
+# ── Step 5: Build wheel ─────────────────────────────────────────────
 echo ""
-echo "[5/6] Removing .py source files (keeping __init__.py)..."
-find "$TMPDIR" -name '*.py' -not -name '__init__.py' -not -path '*/__pycache__/*' -delete
-echo "  [OK]  Source .py files removed"
-
-# ── Step 6: Build wheel ─────────────────────────────────────────────
-echo ""
-echo "[6/6] Building wheel with python -m build --no-isolation..."
+echo "[5/5] Building wheel..."
+find "$TMPDIR" -name '*.py' -not -name '__init__.py' -delete
+echo "  [OK]  Source .py files removed (keeping __init__.py)"
 
 cat > "$TMPDIR/pyproject.toml" << EOF
 [build-system]
@@ -240,7 +209,7 @@ description = "Correctover — Protocol-level contract validation with automatic
 readme = "README.md"
 requires-python = ">=$PY_VER"
 license = {text = "Proprietary Commercial License — see LICENSE"}
-keywords = ["llm", "self-healing", "failover", "circuit-breaker", "api-resilience", "correctover", "semantic-verification"]
+keywords = ["llm", "self-healing", "failover", "correctover", "semantic-verification"]
 authors = [{name = "Correctover Team", email = "team@correctover.com"}]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -292,12 +261,18 @@ cd "$TMPDIR"
 "$PYTHON" -m build --no-isolation --wheel 2>&1
 cd "$HERE"
 
+# ── Collect wheel with correct python tag ──────────────────────────
 mkdir -p "$DIST_DIR"
 if [ -d "$TMPDIR/dist" ]; then
-    cp "$TMPDIR"/dist/*.whl "$DIST_DIR/"
+    for whl in "$TMPDIR"/dist/*.whl; do
+        base="$(basename "$whl")"
+        # correctover-1.3.0-py3-none-any.whl -> correctover-1.3.0-cp312-none-any.whl
+        fixed="${base/py3/$PY_TAG}"
+        cp "$whl" "$DIST_DIR/$fixed"
+        echo "  [OUT] $fixed ($(du -h "$DIST_DIR/$fixed" | cut -f1))"
+    done
     echo ""
     echo "=== BUILD COMPLETE ==="
-    ls -lh "$DIST_DIR"/*.whl 2>/dev/null
 else
     echo "  [FAIL] No dist/ directory created by build" >&2
     exit 1

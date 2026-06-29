@@ -7,8 +7,8 @@ Patches applied:
      After N consecutive 5xx, short-circuit that provider for a cooldown
      period to avoid pointless retries of a failing upstream.
   2. Latency validation -- Track average response latency per provider.
-     When the rolling average exceeds the configurable threshold, flag
-     the provider as degraded through CallResult._metadata.
+     When the rolling average exceeds the configurable threshold, attach
+     a latency_warning to CallResult._metadata.
 
 These patches are applied at import time via __init__.py and are
 transparent to end users.  Fixes apply to the compiled _engine module.
@@ -22,14 +22,14 @@ _logger = _logging.getLogger("correctover._fixes2")
 def _patch_5xx_short_circuit(engine_module):
     """Monkey-patch SelfHealingEngine for 5xx short-circuit.
 
-    Maintains a per-provider counter of consecutive HTTP 5xx errors.
-    Once the threshold (default 3) is hit, the provider is short-circuited
-    for a cooldown period (default 60 s).  Non-5xx errors reset the
-    counter.
+    Hooks into _failover (the actual failure dispatch method) to
+    track consecutive 5xx errors per provider.  Once the threshold
+    (default 3) is reached the provider is short-circuited for a
+    cooldown period (default 60 s).
+
+    Hooks into _pick_provider to honour the short-circuit state.
     """
     SelfHealingEngine = engine_module.SelfHealingEngine
-    CallResult = engine_module.CallResult
-    APIError = engine_module.APIError
     FaultCategory = engine_module.FaultCategory
 
     # ── internal state ──────────────────────────────────────────
@@ -37,14 +37,30 @@ def _patch_5xx_short_circuit(engine_module):
     _threshold = 3
     _cooldown = 60.0
 
-    # ── patch _record_failure to count 5xx ──────────────────────
-    _orig_record = SelfHealingEngine._record_failure
+    # ── helper: extract HTTP status from a Diagnosis ─────────────
+    def _get_http_status(diag):
+        """Extract HTTP status code from Diagnosis.raw_error if present."""
+        raw = getattr(diag, "raw_error", None)
+        if raw is None:
+            return None
+        # raw_error could be an exception, a dict, or a string
+        if isinstance(raw, dict):
+            return raw.get("status_code") or raw.get("status")
+        if isinstance(raw, BaseException):
+            return getattr(raw, "status_code", None) or getattr(raw, "http_status", None)
+        return None
 
-    def _patched_record(self, provider, error):
-        status = getattr(error, "status_code", None) or getattr(error, "http_status", None)
+    # ── patch _failover to count 5xx ────────────────────────────
+    _orig_failover = SelfHealingEngine._failover
+
+    def _patched_failover(self, prompt, model, failed_provider, diag,
+                          sem_class, original_provider, original_model,
+                          request_id, contract=None, trace=None,
+                          call_start=None, **kwargs):
+        status = _get_http_status(diag)
         if status and 500 <= int(status) < 600:
             now = _time.time()
-            entry = _counter.setdefault(provider, {"count": 0, "until": 0})
+            entry = _counter.setdefault(failed_provider, {"count": 0, "until": 0})
             if now >= entry["until"]:
                 entry["count"] = 0
             entry["count"] += 1
@@ -53,30 +69,36 @@ def _patch_5xx_short_circuit(engine_module):
                 _logger.warning(
                     "5xx short-circuit activated for %s "
                     "(%d consecutive, cooldown=%.0fs)",
-                    provider, entry["count"], _cooldown,
+                    failed_provider, entry["count"], _cooldown,
                 )
         else:
-            # success or non-5xx error -> confidence restored
-            _counter.pop(provider, None)
-        return _orig_record(self, provider, error)
+            # non-5xx -> restore confidence
+            _counter.pop(failed_provider, None)
+        return _orig_failover(self, prompt, model, failed_provider, diag,
+                              sem_class, original_provider, original_model,
+                              request_id, contract, trace, call_start, **kwargs)
 
-    SelfHealingEngine._record_failure = _patched_record
+    SelfHealingEngine._failover = _patched_failover
 
-    # ── patch _get_provider to honour short-circuit ─────────────
-    _orig_get = SelfHealingEngine._get_provider
+    # ── patch _pick_provider to honour short-circuit ────────────
+    _orig_pick = SelfHealingEngine._pick_provider
 
-    def _patched_get(self, name):
-        entry = _counter.get(name)
-        if entry and entry["count"] >= _threshold and _time.time() < entry["until"]:
-            raise APIError(
-                f"Provider {name!r} short-circuited "
-                f"({entry['count']} consecutive 5xx)",
-                status_code=503,
-                fault_category=FaultCategory.PROVIDER_UNAVAILABLE,
-            )
-        return _orig_get(self, name)
+    def _patched_pick(self, candidates):
+        """Filter out short-circuited providers from candidate list."""
+        now = _time.time()
+        filtered = []
+        for p in candidates:
+            entry = _counter.get(p)
+            if entry and entry["count"] >= _threshold and now < entry["until"]:
+                continue  # skip short-circuited provider
+            filtered.append(p)
+        # If all providers are short-circuited, fall back to original
+        if not filtered:
+            filtered = candidates
+            _logger.warning("All providers short-circuited, forcing fallback")
+        return _orig_pick(self, filtered)
 
-    SelfHealingEngine._get_provider = _patched_get
+    SelfHealingEngine._pick_provider = _patched_pick
 
     return _counter
 
@@ -97,9 +119,13 @@ def _patch_latency_validation(engine_module):
 
     _orig_call = SelfHealingEngine.call
 
-    async def _patched_call(self, prompt, **kwargs):
+    async def _patched_call(self, prompt, model=None, task_type="",
+                            has_schema=False, semantic_domain=None,
+                            contract=None, api_type="chat", **kwargs):
         start = _time.monotonic()
-        result = await _orig_call(self, prompt, **kwargs)
+        result = await _orig_call(self, prompt, model, task_type,
+                                  has_schema, semantic_domain,
+                                  contract, api_type, **kwargs)
         elapsed_ms = (_time.monotonic() - start) * 1000
 
         provider = getattr(result, "provider", None) or "unknown"
@@ -122,14 +148,31 @@ def _patch_latency_validation(engine_module):
     return _samples
 
 
+def _patch_enforce(engine_module):
+    """Wrapper: apply both patches and return their state objects."""
+    ctr = _patch_5xx_short_circuit(engine_module)
+    samples = _patch_latency_validation(engine_module)
+    return {"5xx_counter": ctr, "latency_samples": samples}
+
+
 def _apply_patches():
-    """Apply both patches (5xx short-circuit + latency validation)."""
+    """Apply both patches (5xx short-circuit + latency validation).
+
+    Catches and logs errors so a patching failure never breaks import.
+    """
     try:
         from correctover._engine import _engine as _eng_mod
     except ImportError:
-        # Direct import of the compiled module
         import correctover._engine as _eng_mod
 
-    _patch_5xx_short_circuit(_eng_mod)
-    _patch_latency_validation(_eng_mod)
-    _logger.debug("_fixes2 patches applied: 5xx short-circuit + latency validation")
+    try:
+        _patch_5xx_short_circuit(_eng_mod)
+        _logger.debug("5xx short-circuit patch applied")
+    except Exception as exc:
+        _logger.warning("5xx short-circuit patch failed: %s", exc)
+
+    try:
+        _patch_latency_validation(_eng_mod)
+        _logger.debug("Latency validation patch applied")
+    except Exception as exc:
+        _logger.warning("Latency validation patch failed: %s", exc)

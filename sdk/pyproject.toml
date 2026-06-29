@@ -4,15 +4,34 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "correctover"
-version = "1.2.0"
-description = "Correctover \u2014 Protocol-level contract validation with automatic verified failover for LLM APIs."
+version = "1.3.0"
+description = "Correctover — Failure is not fatal. Protocol-level contract validation with automatic verified failover for LLM APIs."
 readme = "README.md"
 requires-python = ">=3.12"
-license = {text = "Proprietary Commercial License"}
-keywords = ["llm","self-healing","failover","circuit-breaker","api-resilience"]
+license = {text = "Proprietary Commercial License — see LICENSE"}
+keywords = ["llm", "self-healing", "failover", "circuit-breaker", "api-resilience", "openai", "anthropic", "deepseek", "contract-validation", "correctover", "ai-gateway", "semantic-verification"]
 authors = [{name = "Correctover Team", email = "team@correctover.com"}]
-classifiers = ["Development Status :: 5 - Production/Stable","Intended Audience :: Developers","License :: Other/Proprietary License","Operating System :: OS Independent","Programming Language :: Python :: 3","Programming Language :: Python :: 3.12"]
-dependencies = ["httpx>=0.24.0","aiohttp>=3.8.0"]
+maintainers = [{name = "Correctover Team", email = "team@correctover.com"}]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = ["httpx>=0.24.0", "aiohttp>=3.8.0"]
+
+[project.urls]
+Homepage = "https://correctover.com"
+Documentation = "https://correctover.com/docs"
+Changelog = "https://correctover.com/docs/changelog"
+"Bug Tracker" = "https://correctover.com/support"
+
+[project.scripts]
+"correctover-shield" = "correctover.shield:main"
 
 [tool.setuptools.packages.find]
 include = ["correctover*"]

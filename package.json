@@ -1,7 +1,7 @@
 {
   "name": "correctover-mcp-server",
   "version": "1.0.2",
-  "description": "The first MCP server that verifies AI outputs in real-time \u2014 6-dimension contract validation (structure, schema, latency, cost, identity, integrity) with automatic self-healing failover across 9+ LLM providers. BYOK, zero-dependency, one-line JSON config for Cursor, Claude Desktop, Windsurf.",
+  "description": "The first MCP server that verifies AI outputs in real-time — 6-dimension contract validation (structure, schema, latency, cost, identity, integrity) with automatic self-healing failover across 9+ LLM providers. BYOK, zero-dependency, one-line JSON config for Cursor, Claude Desktop, Windsurf.",
   "main": "index.js",
   "bin": {
     "correctover-mcp-server": "./index.js"
@@ -50,5 +50,8 @@
     "install.js",
     "README.md",
     "LICENSE"
-  ]
+  ],
+  "dependencies": {
+    "playwright": "^1.61.1"
+  }
 }

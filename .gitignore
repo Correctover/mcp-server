@@ -22,7 +22,7 @@ sdk/_engine_decompiled.py
 sdk/*.pyc
 
 # ── Go ─────────────────────────────────────────────────
-vendor/
+/vendor/
 bin/
 correctover-mcp-server-*
 

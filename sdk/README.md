@@ -1,3 +1,21 @@
-# Correctover SDK v1.0.2
+# Correctover SDK
 
-Closed-source compiled package. See https://correctover.com
+**Failure is not fatal.** Protocol-level contract validation with automatic verified failover for LLM APIs.
+
+## Install
+
+```bash
+pip install correctover
+```
+
+## Quick Start
+
+```python
+import correctover
+result = correctover.run("Hello!")
+print(result)
+```
+
+## License
+
+Proprietary Commercial License. See LICENSE file.
