@@ -24,7 +24,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: pip install build wheel
+        run: pip install build wheel setuptools
 
       - name: Derive version
         id: version
@@ -32,22 +32,14 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "sdk_version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
           else
-            # Strip 'python-v' prefix from tag name
             TAG="${{ github.ref_name }}"
             echo "sdk_version=${TAG#python-v}" >> "$GITHUB_OUTPUT"
           fi
-
-      - name: Checkout neuralbridge-sdk
-        uses: actions/checkout@v4
-        with:
-          repository: correctover/neuralbridge-sdk
-          path: neuralbridge-sdk
 
       - name: Build SDK
         run: sdk/scripts/build_matrix.sh ${{ matrix.python-version }}
         working-directory: ${{ github.workspace }}
         env:
-          NEURALBRIDGE_SRC_DIR: ${{ github.workspace }}/neuralbridge-sdk
           CORRECTOVER_VERSION: ${{ steps.version.outputs.sdk_version }}
 
       - name: Upload wheel
