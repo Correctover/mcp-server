@@ -1,8 +1,8 @@
 # Correctover MCP Server
 
 <p align="center">
-  <strong>The MCP Reliability Layer for AI</strong><br/>
-  <em>Others deliver messages. We verify the content.</em>
+  <strong>The Runtime Agent Governance Layer for Enterprise AI</strong><br/>
+  <em>Reliability is table stakes. Governance is the moat.</em>
 </p>
 
 <p align="center">
@@ -15,28 +15,33 @@
 
 ## What is this?
 
-Correctover is the **first MCP server that verifies AI outputs in real-time**.
+Correctover is the **Runtime Agent Governance layer for AI** — the first MCP-native system that verifies every LLM response in real-time and enforces **policy**: what an agent can do, which providers it can talk to, what outputs are acceptable, and what to do when things go wrong.
 
-While every other MCP server connects your AI tools to data sources, Correctover sits in the execution path and ensures every LLM response is **correct, complete, and reliable** — before it reaches your editor.
+While every other MCP server connects your AI tools to data sources, Correctover sits in the **execution path** — not just routing messages but guaranteeing the correctness of what comes back.
 
 ```
 Your AI Tool (Cursor/Claude Desktop/Windsurf)
         │
         ▼
-┌─────────────────────────────────┐
-│  Correctover MCP Server         │
-│                                 │
-│  ① Route → picks best provider  │
-│  ② Execute → calls LLM API     │
-│  ③ Verify → 6-dim check        │  ← This is what nobody else does
-│  ④ Heal → auto-fix or failover  │
-│  ⑤ Deliver → verified output    │
-│                                 │
-└─────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│  Correctover — Runtime Agent Governance │
+│                                         │
+│  ① Route → picks best provider          │
+│  ② Execute → calls LLM API             │
+│  ③ Verify → 6-dimension check          │  ← Reliability layer
+│  ④ Heal → auto-fix or failover          │
+│  ⑤ Audit → log every decision           │  ← Governance layer
+│  ⑥ Enforce → RBAC / policy / quota      │  ← Compliance layer
+│                                         │
+└─────────────────────────────────────────┘
         │
         ▼
   LLM Providers (OpenAI / Anthropic / DeepSeek / ...)
 ```
+
+> **Failover ≠ Correctover.** Failover switches providers. Correctover switches *and verifies the output is correct before delivering it* — then logs the entire chain as an auditable event.
+
+> AI is at the inflection point from "functional demo" to "enterprise production". Correctover is the **trust layer** that makes this migration possible — solving the #1 blocker CTOs cite for not deploying AI agents at scale.
 
 ## Why you need this
 
@@ -233,6 +238,37 @@ A: Yes. Add the JSON config above to `~/.cursor/mcp.json` and restart Cursor. Do
 
 **Q: What if I only have one provider?**
 A: Still works. You get 6-dimension validation on every response. Failover kicks in when you add more providers later.
+
+## Enterprise Roadmap
+
+Correctover follows an **Open Core** model. The MCP protocol, provider verification, and core validation engine are open source. Enterprise features are designed for regulated industries (finance, legal, healthcare) and large-scale deployments.
+
+| Feature | Open Source | Enterprise |
+|---------|:-----------:|:----------:|
+| 6-dimension validation (structure/schema/latency/cost/identity/integrity) | ✅ | ✅ |
+| Auto-failover across 9+ providers | ✅ | ✅ |
+| BYOK — keys stay on your machine | ✅ | ✅ |
+| MCP protocol (stdio) | ✅ | ✅ |
+| **Audit Ledger** — every Agent call, interception, and fix logged as compliance-ready events | — | ✅ |
+| **Multi-tenant RBAC** — prevent Confused Deputy attacks per Agent scope | — | ✅ |
+| **Private validation model** — on-premises verification without data leaving your VPC | — | ✅ |
+| **Drift database** — aggregated production failure patterns across 100K+ calls | — | ✅ |
+| **WebSocket transport** — real-time streaming with validation | — | ✅ |
+| **SLA guarantee** — 99.9% uptime, dedicated support | — | ✅ |
+| **Custom validation rules** — domain-specific contracts (HIPAA, SOC2, PCI) | — | ✅ |
+
+> **Why Open Core works for you:** Developers get the best open-source validation engine. CTOs get the audit trail and compliance they need to approve AI in production. No feature crippling. No bait-and-switch. Clear boundaries.
+
+## Data Moat
+
+Every Correctover deployment collects **anonymized drift patterns** — which providers fail on which inputs, which validation dimensions trigger most often, which failover strategies succeed. Over time, this dataset becomes a unique asset: the **largest known corpus of LLM production failure patterns**.
+
+This data directly informs:
+- **Predictive failover** — before a provider fails, Correctover knows it's trending toward failure
+- **Benchmark accuracy** — real-world reliability scores, not synthetic benchmarks
+- **Industry reports** — the *2026 MCP Production-Grade Security White Paper* (coming Q3 2026)
+
+Enterprise deployments can opt out of telemetry entirely. The data moat is powered by opt-in telemetry from the open-source tier.
 
 ## Sponsor
 
