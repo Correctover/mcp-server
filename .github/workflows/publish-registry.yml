@@ -18,10 +18,11 @@ jobs:
 
       - name: Install mcp-publisher
         run: |
-          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s)_$(uname -m).tar.gz" -o mcp-publisher.tar.gz
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" -o mcp-publisher.tar.gz
           tar xzf mcp-publisher.tar.gz
           chmod +x mcp-publisher
           sudo mv mcp-publisher /usr/local/bin/
+          mcp-publisher --version
 
       - name: Authenticate via GitHub OIDC
         run: mcp-publisher login github-oidc
