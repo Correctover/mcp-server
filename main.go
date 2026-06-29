@@ -7,6 +7,8 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/Correctover/mcp-server/mcp"
 	"github.com/Correctover/mcp-server/provider"
@@ -20,7 +22,57 @@ var (
 	totalCalls    int64
 	totalPass     int64
 	totalFailover int64
+
+	// Validation history ring buffer
+	historyMu      sync.Mutex
+	historyBuffer  [500]ValidationRecord
+	historyIndex   int
+	historyCount   int
 )
+
+// ValidationRecord stores a single validation result for history queries.
+type ValidationRecord struct {
+	Timestamp      string   `json:"timestamp"`
+	Provider       string   `json:"provider"`
+	Model          string   `json:"model"`
+	LatencyMs      int64    `json:"latency_ms"`
+	Passed         bool     `json:"passed"`
+	Score          int      `json:"score"`
+	FailoverCount  int      `json:"failover_count"`
+	FailureReasons []string `json:"failure_reasons,omitempty"`
+}
+
+// recordValidation adds a validation result to the ring buffer.
+func recordValidation(rec ValidationRecord) {
+	historyMu.Lock()
+	defer historyMu.Unlock()
+	historyBuffer[historyIndex] = rec
+	historyIndex = (historyIndex + 1) % len(historyBuffer)
+	if historyCount < len(historyBuffer) {
+		historyCount++
+	}
+}
+
+// getHistory returns paginated validation records (newest first).
+func getHistory(offset, limit int) ([]ValidationRecord, int) {
+	historyMu.Lock()
+	defer historyMu.Unlock()
+
+	if offset >= historyCount {
+		return []ValidationRecord{}, historyCount
+	}
+	if offset+limit > historyCount {
+		limit = historyCount - offset
+	}
+
+	result := make([]ValidationRecord, limit)
+	for i := 0; i < limit; i++ {
+		// Walk backwards from most recent
+		idx := (historyIndex - 1 - offset - i + len(historyBuffer)) % len(historyBuffer)
+		result[i] = historyBuffer[idx]
+	}
+	return result, historyCount
+}
 
 func main() {
 	server := mcp.NewServer()
@@ -31,6 +83,7 @@ func main() {
 	server.RegisterTool(toolHealth(), handleHealth)
 	server.RegisterTool(toolProviders(), handleProviders)
 	server.RegisterTool(toolStats(), handleStats)
+	server.RegisterTool(toolValidationHistory(), handleValidationHistory)
 
 	// Register prompts
 	server.RegisterPrompt(promptVerify(), handlePromptVerify)
@@ -173,6 +226,17 @@ func handleChat(args map[string]any) (*mcp.ToolCallResult, error) {
 				totalFailover++
 				continue
 			}
+			// Record failure in history
+			recordValidation(ValidationRecord{
+				Timestamp:      time.Now().UTC().Format(time.RFC3339),
+				Provider:       provName,
+				Model:          model,
+				LatencyMs:      latency,
+				Passed:         false,
+				Score:          0,
+				FailoverCount:  failoverCount,
+				FailureReasons: []string{fmt.Sprintf("provider_error: %v", callErr)},
+			})
 			return nil, fmt.Errorf("all providers failed. Last error from %s: %w", provName, callErr)
 		}
 
@@ -185,6 +249,16 @@ func handleChat(args map[string]any) (*mcp.ToolCallResult, error) {
 
 		if validation.Passed {
 			totalPass++
+			// Record success in history
+			recordValidation(ValidationRecord{
+				Timestamp:     time.Now().UTC().Format(time.RFC3339),
+				Provider:      lastProvider,
+				Model:         model,
+				LatencyMs:     lastLatency,
+				Passed:        true,
+				Score:         validation.Score,
+				FailoverCount: failoverCount,
+			})
 			break // Success!
 		}
 
@@ -200,6 +274,20 @@ func handleChat(args map[string]any) (*mcp.ToolCallResult, error) {
 
 	if lastResp == nil {
 		return nil, fmt.Errorf("no response received from any provider")
+	}
+
+	// Record validation result if not already recorded (failover exhausted without success)
+	if !lastValidation.Passed {
+		recordValidation(ValidationRecord{
+			Timestamp:      time.Now().UTC().Format(time.RFC3339),
+			Provider:       lastProvider,
+			Model:          model,
+			LatencyMs:      lastLatency,
+			Passed:         false,
+			Score:          lastValidation.Score,
+			FailoverCount:  failoverCount,
+			FailureReasons: lastValidation.Reasons,
+		})
 	}
 
 	// Attach metadata
@@ -372,6 +460,93 @@ func handleStats(args map[string]any) (*mcp.ToolCallResult, error) {
 	}, nil
 }
 
+// ==================== Tool: validation_history ====================
+
+func toolValidationHistory() mcp.Tool {
+	return mcp.Tool{
+		Name:        "validation_history",
+		Description: "Query recent validation results with pagination. Returns the most recent LLM call validation records, newest first. Each record includes provider, model, latency, pass/fail status, validation score, and failure reasons. Use limit and offset to paginate through results. Default returns the 20 most recent records. Maximum 100 per page. The buffer holds up to 500 records; older entries are automatically overwritten.",
+		InputSchema: mcp.InputSchema{
+			Type: "object",
+			Properties: map[string]mcp.Property{
+				"limit": {
+					Type:        "integer",
+					Description: "Maximum number of records to return (1-100). Default: 20.",
+				},
+				"offset": {
+					Type:        "integer",
+					Description: "Number of records to skip from the most recent. Use for pagination. Default: 0.",
+				},
+			},
+		},
+		Annotations: &mcp.ToolAnnotations{
+			Title:           "Validation History",
+			Description:     "Paginated query of recent validation results (ring buffer, max 500 records)",
+			ReadOnlyHint:    mcp.BoolPtr(true),
+			DestructiveHint: mcp.BoolPtr(false),
+			IdempotentHint:  mcp.BoolPtr(true),
+			OpenWorldHint:   mcp.BoolPtr(false),
+		},
+	}
+}
+
+func handleValidationHistory(args map[string]any) (*mcp.ToolCallResult, error) {
+	// Parse pagination params with safe defaults
+	limit := 20
+	offset := 0
+
+	if l, ok := args["limit"].(float64); ok {
+		limit = int(l)
+		if limit < 1 {
+			limit = 1
+		}
+		if limit > 100 {
+			limit = 100
+		}
+	}
+	if o, ok := args["offset"].(float64); ok {
+		offset = int(o)
+		if offset < 0 {
+			offset = 0
+		}
+	}
+
+	records, total := getHistory(offset, limit)
+
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("📋 Validation History (showing %d-%d of %d total)\n",
+		offset+1, offset+len(records), total))
+	b.WriteString("══════════════════════════════════════════════════\n\n")
+
+	if len(records) == 0 {
+		b.WriteString("No validation records yet. Use the 'chat' tool to generate some.\n")
+	} else {
+		for i, rec := range records {
+			status := "✅ PASS"
+			if !rec.Passed {
+				status = "❌ FAIL"
+			}
+			b.WriteString(fmt.Sprintf("%d. [%s] %s %s — %dms (score: %d/6",
+				offset+i+1, rec.Timestamp, status, rec.Provider, rec.LatencyMs, rec.Score))
+			if rec.FailoverCount > 0 {
+				b.WriteString(fmt.Sprintf(", failovers: %d", rec.FailoverCount))
+			}
+			b.WriteString(")\n")
+			if len(rec.FailureReasons) > 0 {
+				b.WriteString(fmt.Sprintf("   Reasons: %s\n", strings.Join(rec.FailureReasons, "; ")))
+			}
+		}
+		b.WriteString(fmt.Sprintf("\nPage info: offset=%d, limit=%d, total=%d\n", offset, limit, total))
+		if offset+limit < total {
+			b.WriteString(fmt.Sprintf("Next page: use offset=%d\n", offset+limit))
+		}
+	}
+
+	return &mcp.ToolCallResult{
+		Content: []mcp.Content{mcp.TextContent(b.String())},
+	}, nil
+}
+
 // ==================== Prompts ====================
 
 func promptVerify() mcp.Prompt {
@@ -489,7 +664,8 @@ func handlePromptReliabilityAudit(args map[string]any) (*mcp.PromptGetResult, er
 		"2. Run the 'providers' tool to review configuration details\n" +
 		"3. Send a test prompt via 'chat' tool to each active provider\n" +
 		"4. Validate each response using the 6-dimension validation report\n" +
-		"5. Run the 'stats' tool to review session metrics\n\n" +
+		"5. Run the 'stats' tool to review session metrics\n" +
+		"6. Run the 'validation_history' tool to review recent validation results\n\n" +
 		"## Output Format:\n" +
 		"Provide a structured audit report with:\n" +
 		"- Provider status summary (active/inactive/misconfigured)\n" +
