@@ -258,3 +258,21 @@ def run(prompt="", provider="", **kwargs):
     if prompt:
         return asyncio.run(engine.call(prompt, **kwargs))
     return engine
+
+
+# ── Apply runtime patches for known bugs ──────────────────────────
+# Bug #2 (latency), #3 (5xx), and the historical fixes in _fixes.pyc
+# are applied here at import time.
+try:
+    from correctover._fixes import _apply_patches as _apply_fixes
+    _apply_fixes()
+except Exception as _fix_err:
+    if _os.environ.get("CORRECTOVER_DEBUG"):
+        print(f"[Correctover] _fixes load warning: {_fix_err}")
+
+try:
+    from correctover._fixes2 import _apply_patches as _apply_fixes2
+    _apply_fixes2()
+except Exception as _fix2_err:
+    if _os.environ.get("CORRECTOVER_DEBUG"):
+        print(f"[Correctover] _fixes2 load warning: {_fix2_err}")

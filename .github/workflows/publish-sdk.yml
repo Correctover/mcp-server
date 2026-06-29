@@ -1,0 +1,69 @@
+name: Build & Publish Python SDK
+
+on:
+  push:
+    tags:
+      - 'python-v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 1.3.0)'
+        required: true
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: pip install build wheel
+
+      - name: Derive version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "sdk_version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            # Strip 'python-v' prefix from tag name
+            TAG="${{ github.ref_name }}"
+            echo "sdk_version=${TAG#python-v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout neuralbridge-sdk
+        uses: actions/checkout@v4
+        with:
+          repository: correctover/neuralbridge-sdk
+          path: neuralbridge-sdk
+
+      - name: Build SDK
+        run: sdk/scripts/build_matrix.sh ${{ matrix.python-version }}
+        working-directory: ${{ github.workspace }}
+        env:
+          NEURALBRIDGE_SRC_DIR: ${{ github.workspace }}/neuralbridge-sdk
+          CORRECTOVER_VERSION: ${{ steps.version.outputs.sdk_version }}
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-py${{ matrix.python-version }}
+          path: sdk/dist/*.whl
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+
+      - name: Publish to PyPI
+        run: pip install twine && twine upload --skip-existing */correctover-*.whl
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}

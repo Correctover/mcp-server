@@ -103,6 +103,9 @@ startCommand:
       DEEPSEEK_BASE_URL:
         type: string
         description: "Override DeepSeek base URL (for proxy/gateway/mirror)"
+      CORRECTOVER_LICENSE_KEY:
+        type: string
+        description: "Pro/Enterprise license key for unlimited providers (CV-PRO-...)"
   commandFunction: |-
     (config) => ({
       "command": "npx",
@@ -117,6 +120,7 @@ startCommand:
         "SILICONFLOW_API_KEY": config.SILICONFLOW_API_KEY || "",
         "GROQ_API_KEY": config.GROQ_API_KEY || "",
         "TOGETHER_API_KEY": config.TOGETHER_API_KEY || "",
+        "CORRECTOVER_LICENSE_KEY": config.CORRECTOVER_LICENSE_KEY || "",
         "OPENAI_BASE_URL": config.OPENAI_BASE_URL || "",
         "ANTHROPIC_BASE_URL": config.ANTHROPIC_BASE_URL || "",
         "DEEPSEEK_BASE_URL": config.DEEPSEEK_BASE_URL || ""

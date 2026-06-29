@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Correctover/mcp-server/license"
 	"github.com/Correctover/mcp-server/mcp"
 	"github.com/Correctover/mcp-server/provider"
 	"github.com/Correctover/mcp-server/validator"
@@ -18,6 +19,7 @@ import (
 var (
 	provManager = provider.NewManager()
 	valid       = validator.New()
+	lic         = license.LoadFromEnv() // License state (never nil)
 	// Stats
 	totalCalls    int64
 	totalPass     int64
@@ -92,6 +94,8 @@ func main() {
 
 	log.SetOutput(os.Stderr)
 	log.SetPrefix("[correctover] ")
+
+	log.Printf("License: %s", lic.Summary())
 
 	available := provManager.AvailableProviders()
 	if len(available) == 0 {
@@ -357,7 +361,8 @@ func handleHealth(args map[string]any) (*mcp.ToolCallResult, error) {
 
 	var b strings.Builder
 	b.WriteString("✅ Correctover MCP Server — Provider Health\n")
-	b.WriteString("═══════════════════════════════════════\n\n")
+	b.WriteString("═══════════════════════════════════════\n")
+	b.WriteString(fmt.Sprintf("  %s\n\n", lic.Summary()))
 
 	for _, name := range available {
 		p, _ := provManager.Get(name)
@@ -453,6 +458,7 @@ func handleStats(args map[string]any) (*mcp.ToolCallResult, error) {
 	b.WriteString(fmt.Sprintf("  Validation Passed: %d (%s)\n", totalPass, passRate))
 	b.WriteString(fmt.Sprintf("  Failovers:        %d\n", totalFailover))
 	b.WriteString(fmt.Sprintf("  Providers Active: %d\n", len(provManager.AvailableProviders())))
+	b.WriteString(fmt.Sprintf("  License Plan:     %s\n", lic.PlanName()))
 	b.WriteString(fmt.Sprintf("  Server Version:   %s\n", mcp.ServerVersion))
 
 	return &mcp.ToolCallResult{
@@ -700,6 +706,15 @@ func getProvidersByPriority() []string {
 		}
 		return available[i] < available[j]
 	})
+
+	// Apply license provider limit
+	limit := lic.ProviderLimit()
+	if len(available) > limit {
+		log.Printf("License plan '%s' limits to %d providers (have %d)",
+			lic.PlanName(), limit, len(available))
+		available = available[:limit]
+	}
+
 	return available
 }
 

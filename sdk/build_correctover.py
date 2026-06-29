@@ -1,14 +1,50 @@
 #!/usr/bin/env python3
 # PYTHONIOENCODING=utf-8
-"""Build correctover SDK v1.0.2 from NeuralBridge 5.7.0 source."""
-import os, sys, re, shutil, py_compile, glob, subprocess
+"""Build correctover SDK from NeuralBridge source.
+
+Usage:
+  python build_correctover.py                              # NB_DIR from env or default
+  python build_correctover.py --python py -3.12            # custom Python path
+  python build_correctover.py --version 1.3.0              # override version
+  python build_correctover.py --nb-dir D:/path/to/sdk      # override source dir
+
+Environment:
+  NEURALBRIDGE_SRC_DIR   Override NB_DIR (highest precedence after CLI)
+  CORRECTOVER_VERSION    Override version string
+"""
+import os, sys, re, shutil, py_compile, glob, subprocess, argparse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-NB_DIR = r"D:\workspace\neuralbridge-sdk"
+
+# ── CLI ──────────────────────────────────────────────────────────────
+parser = argparse.ArgumentParser(description="Build correctover SDK from NeuralBridge source")
+parser.add_argument("--nb-dir", default=None,
+                    help="Path to neuralbridge-sdk checkout (overrides NEURALBRIDGE_SRC_DIR env)")
+parser.add_argument("--python", default=sys.executable,
+                    help="Python interpreter to use for compilation & build")
+parser.add_argument("--version", default=None,
+                    help="SDK version string (default: 1.3.0, overrides CORRECTOVER_VERSION env)")
+args = parser.parse_args()
+
+# Source directory: CLI > env > default
+NB_DIR = (args.nb_dir
+          or os.environ.get("NEURALBRIDGE_SRC_DIR")
+          or r"D:\workspace\neuralbridge-sdk")
+
+# Version: CLI > env > default
+VERSION = (args.version
+           or os.environ.get("CORRECTOVER_VERSION")
+           or "1.3.0")
+
+PYTHON = args.python
+
 OUT_DIR = os.path.join(HERE, "correctover")
 
 TELEMETRY_OLD = "license-api-neuralbridge-hk-rewfrmblft.cn-hongkong.fcapp.run"
 TELEMETRY_NEW = "license-api-correctover-hk.oss-cn-hongkong.aliyuncs.com"
+
+# Ensure we use forward slashes for path manipulation
+NB_DIR = NB_DIR.replace("\\", "/")
 
 
 def get_source_files():
@@ -35,12 +71,10 @@ def replace_namespace(content):
 
 def fix_multi_line_fstrings(content):
     """Fix multi-line f-strings that are invalid Python syntax."""
-    # Replace f-strings with literal newlines in them
-    # Pattern: _print(f"<newline>  ...") -> _print(f"\n  ...")
     fixes = {
         '_print(f"\n  ✅ 修复脚本已生成: ': '_print(f"\\n  ✅ 修复脚本已生成: ',
         '_print(f"\n  ❌ 无法写入修复脚本: ': '_print(f"\\n  ❌ 无法写入修复脚本: ',
-        '_print(f"\n  {\'─\' * 55}": '_print(f"\\n  {\'─\' * 55}"',
+        '_print(f"\n  {\'─\' * 55}":': '_print(f"\\n  {\'─\' * 55}"',
     }
     for old, new in fixes.items():
         content = content.replace(old, new)
@@ -49,7 +83,7 @@ def fix_multi_line_fstrings(content):
 
 def copy_and_rename():
     print("=" * 60)
-    print("[1/5] Copying and renaming source files...")
+    print("[1/6] Copying and renaming source files...")
     print("=" * 60)
     if os.path.exists(OUT_DIR):
         shutil.rmtree(OUT_DIR)
@@ -67,25 +101,55 @@ def copy_and_rename():
         print(f"  [COPY] {rel_path}")
 
     print(f"  Total: {len(files)} files copied")
+
+    # ── Override correctover-specific files ──────────────────────
+    # _version.py
+    ver_path = os.path.join(OUT_DIR, "_version.py")
+    with open(ver_path, "w", encoding="utf-8") as f:
+        f.write(f'# Copyright 2024-2026 Correctover Team\n'
+                f'# Proprietary Commercial License\n'
+                f'"""Version info for Correctover SDK."""\n'
+                f'__version__ = "{VERSION}"\n'
+                f'version = __version__\n')
+    print(f"  [OVERRIDE] _version.py (v{VERSION})")
+
+    # _fixes2.py — use repo version if available
+    fixes2_src = os.path.join(OUT_DIR, "_fixes2.py")
+    fixes2_repo = os.path.join(HERE, "correctover", "_fixes2.py")
+    if os.path.exists(fixes2_repo):
+        shutil.copy2(fixes2_repo, fixes2_src)
+        print(f"  [OVERRIDE] _fixes2.py (from repo)")
+    else:
+        print(f"  [WARN] _fixes2.py not found in repo, keeping NB version")
+
+    # __init__.py — use repo version which has the _apply_patches calls
+    init_src = os.path.join(OUT_DIR, "__init__.py")
+    init_repo = os.path.join(HERE, "correctover", "__init__.py")
+    if os.path.exists(init_repo):
+        shutil.copy2(init_repo, init_src)
+        print(f"  [OVERRIDE] __init__.py (from repo, with _apply_patches calls)")
+    else:
+        print(f"  [WARN] __init__.py not found in repo, keeping NB version")
+
     return files
 
 
 def create_pyproject():
-    print("\n[2/5] Creating pyproject.toml...")
-    pyproject = """[build-system]
+    print("\n[2/6] Creating pyproject.toml...")
+    pyproject = f"""[build-system]
 requires = ["setuptools>=64,<75"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "correctover"
-version = "1.0.2"
+version = "{VERSION}"
 description = "Correctover — Failure is not fatal. Protocol-level contract validation with automatic verified failover for LLM APIs."
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "Proprietary Commercial License — see LICENSE"}
+license = {{text = "Proprietary Commercial License — see LICENSE"}}
 keywords = ["llm", "self-healing", "failover", "circuit-breaker", "api-resilience", "openai", "anthropic", "deepseek", "contract-validation", "correctover", "ai-gateway", "semantic-verification"]
-authors = [{name = "Correctover Team", email = "team@correctover.com"}]
-maintainers = [{name = "Correctover Team", email = "team@correctover.com"}]
+authors = [{{name = "Correctover Team", email = "team@correctover.com"}}]
+maintainers = [{{name = "Correctover Team", email = "team@correctover.com"}}]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
@@ -125,7 +189,7 @@ correctover = ["*.pyc"]
 
 
 def create_license():
-    text = """CORRECTOVER SDK — PROPRIETARY COMMERCIAL LICENSE
+    text = f"""CORRECTOVER SDK — PROPRIETARY COMMERCIAL LICENSE
 Copyright (c) 2024-2026 Correctover Team. All rights reserved.
 
 This software is NOT open source. It is distributed as compiled
@@ -166,20 +230,67 @@ Proprietary Commercial License. See LICENSE file.
     print("  [OK] README.md")
 
 
+def strip_pyc_paths(pkg_dir):
+    """Recursively strip absolute paths from .pyc co_filename attributes."""
+    import marshal, struct
+
+    for root, dirs, files in os.walk(pkg_dir):
+        for fn in files:
+            if not fn.endswith(".pyc"):
+                continue
+            fpath = os.path.join(root, fn)
+            with open(fpath, "rb") as fh:
+                data = fh.read()
+
+            flags = struct.unpack("<I", data[4:8])[0]
+            header = 16  # same header size for 3.11 and 3.12
+            body = data[header:]
+
+            try:
+                code = marshal.loads(body)
+            except Exception:
+                continue
+
+            def _strip(obj, visited=None):
+                if visited is None:
+                    visited = set()
+                if id(obj) in visited:
+                    return obj
+                visited.add(id(obj))
+
+                fname = os.path.basename(obj.co_filename)
+                if obj.co_filename != fname:
+                    obj = obj.replace(co_filename=fname)
+                new_consts = []
+                for c in obj.co_consts:
+                    if hasattr(c, "co_code"):
+                        c = _strip(c, visited)
+                    new_consts.append(c)
+                if new_consts != list(obj.co_consts):
+                    obj = obj.replace(co_consts=tuple(new_consts))
+                return obj
+
+            code = _strip(code)
+            new_body = marshal.dumps(code)
+            with open(fpath, "wb") as fh:
+                fh.write(data[:header] + new_body)
+            print(f"  [STRIP] {fn}")
+
+
 def compile_all():
-    print("\n[3/5] Compiling .py -> .pyc (closed source)...")
+    print("\n[3/6] Compiling .py -> .pyc (closed source)...")
 
-    # Remove Cython artifacts
-    for root, dirs, files in os.walk(OUT_DIR):
-        for f in files:
-            if f.endswith(".c") or f.endswith(".pyd") or f.endswith(".so"):
-                os.remove(os.path.join(root, f))
+    # Ensure target dir exists
+    pkg = OUT_DIR
+    if not os.path.isdir(pkg):
+        print(f"  [FAIL] Package directory not found: {pkg}")
+        return False
 
-    # First, check ALL .py files compile correctly
+    # Collect all .py files (exclude __init__.py which stays as source)
     all_py = []
-    for root, dirs, files in os.walk(OUT_DIR):
+    for root, dirs, files in os.walk(pkg):
         for f in files:
-            if f.endswith(".py"):
+            if f.endswith(".py") and f != "__init__.py":
                 all_py.append(os.path.join(root, f))
 
     # Compile each file
@@ -196,65 +307,67 @@ def compile_all():
     print(f"  Compiled: {compiled}, Failed: {failed}")
 
     if failed > 0:
-        # Show the lines causing issues
-        print("  Fixing known multi-line f-strings and retrying...")
-        # We already fixed them in copy_and_rename, but let's check
         return False
 
     # Move .pyc from __pycache__ to same dir as .py
-    for root, dirs, files in os.walk(OUT_DIR):
+    for root, dirs, files in os.walk(pkg):
         pycache = os.path.join(root, "__pycache__")
         if os.path.isdir(pycache):
             for f in os.listdir(pycache):
                 if f.endswith(".pyc"):
                     src = os.path.join(pycache, f)
-                    # Remove magic number prefix to get original name
                     # Format: module.cpython-312.pyc -> module.pyc
                     dst_name = f.split(".")[0] + ".pyc"
                     dst = os.path.join(root, dst_name)
                     shutil.copy2(src, dst)
                     print(f"  [PYC] {dst_name}")
 
-    # Remove all .py files and __pycache__
-    for root, dirs, files in os.walk(OUT_DIR):
-        for f in files:
-            if f.endswith(".py"):
-                os.remove(os.path.join(root, f))
-    for root, dirs, files in os.walk(OUT_DIR):
-        for d in dirs:
+    # Remove __pycache__ directories
+    for root, dirs, files in os.walk(pkg):
+        for d in list(dirs):
             if d == "__pycache__":
                 shutil.rmtree(os.path.join(root, d))
 
+    # Strip absolute paths from .pyc files
+    print("  [STRIP] Removing absolute paths from .pyc headers...")
+    strip_pyc_paths(pkg)
+
+    # Remove .py source files (keep __init__.py)
+    for root, dirs, files in os.walk(pkg):
+        for f in files:
+            if f.endswith(".py") and f != "__init__.py":
+                os.remove(os.path.join(root, f))
+
     # Count .pyc files
     pyc_count = 0
-    for root, dirs, files in os.walk(OUT_DIR):
+    for root, dirs, files in os.walk(pkg):
         for f in files:
             if f.endswith(".pyc"):
                 pyc_count += 1
 
-    print(f"  [OK] {pyc_count} .pyc files, all .py sources removed")
+    print(f"  [OK] {pyc_count} .pyc files, .py sources removed (except __init__.py)")
     return True
 
 
 def verify():
-    print("\n[4/5] Verifying...")
-    # Check no .py files remain
+    print("\n[4/6] Verifying...")
+    # Check no .py files remain (except __init__.py)
     py_count = 0
     for root, dirs, files in os.walk(OUT_DIR):
         for f in files:
-            if f.endswith(".py"):
+            if f.endswith(".py") and f != "__init__.py":
                 py_count += 1
     if py_count > 0:
-        print(f"  [WARN] {py_count} .py files remain!")
+        print(f"  [WARN] {py_count} .py files remain (excluding __init__.py)!")
     else:
-        print("  [OK] No .py source files")
+        print("  [OK] No .py source files (except __init__.py)")
 
-    # Check __init__.pyc exists
-    init = os.path.join(OUT_DIR, "__init__.pyc")
+    # Check __init__.py exists
+    init = os.path.join(OUT_DIR, "__init__.py")
     if os.path.exists(init):
-        print(f"  [OK] __init__.pyc ({os.path.getsize(init)} bytes)")
+        print(f"  [OK] __init__.py ({os.path.getsize(init)} bytes)")
     else:
-        print("  [FAIL] __init__.pyc missing!")
+        print("  [FAIL] __init__.py missing!")
 
     # Count modules
     pyc_total = 0
@@ -264,7 +377,6 @@ def verify():
                 pyc_total += 1
     print(f"  [OK] {pyc_total} compiled modules")
 
-    # Check pyproject.toml
     if os.path.exists(os.path.join(HERE, "pyproject.toml")):
         print("  [OK] pyproject.toml")
 
@@ -272,18 +384,18 @@ def verify():
 
 
 def build_wheel():
-    print("\n[5/5] Building wheel...")
+    print("\n[5/6] Building wheel...")
     dist_dir = os.path.join(HERE, "dist")
     if os.path.exists(dist_dir):
         shutil.rmtree(dist_dir)
 
     result = subprocess.run(
-        [sys.executable, "-m", "build", "--wheel"],
+        [PYTHON, "-m", "build", "--wheel", "--no-isolation"],
         cwd=HERE, capture_output=True, text=True, env={**os.environ}
     )
     if result.stdout:
         for line in result.stdout.splitlines():
-            if "error" in line.lower() or "built" in line.lower() or "Success" in line:
+            if any(kw in line.lower() for kw in ("error", "built", "success")):
                 print(f"  {line}")
     if result.returncode != 0:
         print(f"  [FAIL] {result.stderr}")
@@ -296,14 +408,16 @@ def build_wheel():
 
 
 def main():
-    print("Correctover SDK v1.0.2 - Build from NB 5.7.0")
+    print(f"Correctover SDK v{VERSION} - Build from {NB_DIR}")
+    print(f"  Python: {PYTHON}")
+    print(f"  NB_DIR: {NB_DIR}")
     copy_and_rename()
     create_pyproject()
     create_license()
     create_readme()
     if compile_all() and verify():
         if build_wheel():
-            print("\nBuild SUCCESS!")
+            print(f"\nBuild SUCCESS! (v{VERSION})")
             return
     print("\nBuild FAILED")
     sys.exit(1)

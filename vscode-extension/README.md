@@ -6,8 +6,8 @@
 </p>
 
 <p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=Correctover.correctover-vscode">
-    <img src="https://img.shields.io/vscode-marketplace/v/Correctover.correctover-vscode.svg?label=VS%20Code%20Marketplace&color=00E5FF" alt="Marketplace">
+  <a href="https://github.com/Correctover/mcp-server/releases/tag/correctover-vscode-v1.0.0">
+    <img src="https://img.shields.io/github/v/release/Correctover/mcp-server?filter=correctover-vscode-*&label=VSIX%20Release&color=00E5FF" alt="VSIX Release">
   </a>
   <a href="https://github.com/Correctover/mcp-server">
     <img src="https://img.shields.io/github/stars/Correctover/mcp-server?style=flat&label=GitHub%20Stars" alt="Stars">
@@ -65,6 +65,17 @@ Registers with VS Code's native MCP tool system (VS Code 1.95+). Your AI tools c
 ### Prerequisites
 - **VS Code 1.95+**
 - **correctover-mcp-server binary** — The Go MCP server
+
+### Install the Extension
+
+**Option A: Install from VSIX (recommended — no VS Marketplace account needed)**
+
+1. Download `correctover-vscode-1.0.0.vsix` from [GitHub Releases](https://github.com/Correctover/mcp-server/releases/tag/correctover-vscode-v1.0.0)
+2. Open VS Code → Extensions view (`Ctrl+Shift+X`)
+3. Click `...` → **Install from VSIX...**
+4. Select the downloaded file
+
+**Option B: VS Marketplace** (publisher registration pending — coming soon)
 
 ### Install the Server Binary
 
@@ -170,7 +181,7 @@ For teams needing:
 
 ## 📝 License
 
-Apache 2.0 — See [LICENSE](LICENSE) for details.
+Apache 2.0 — See [LICENSE.txt](LICENSE.txt) for details.
 
 <p align="center">
   <sub>Because failover switches. Correctover verifies.™</sub>

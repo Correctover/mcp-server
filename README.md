@@ -250,9 +250,31 @@ For team deployments, custom validation rules, or dedicated support:
 
 📧 **hello@correctover.com**
 
-## License
+## License & Commercial
 
-Apache-2.0
+This project is **Apache 2.0** licensed for the core MCP protocol and provider implementation. The license verification system (`license/` package) enables commercial features:
+
+| Plan | Price | Providers | Features |
+|------|-------|-----------|----------|
+| **Free** | $0 | Up to 2 | Unlimited chat + auto-failover + 6-dimension validation |
+| **Pro** | $99/yr | Unlimited | All 9+ providers, priority support |
+| **Enterprise** | $1,499/mo | Unlimited | Private deployment, SLA, custom validation rules |
+
+### Pro Activation
+
+```bash
+# Set your Pro/Enterprise license key
+export CORRECTOVER_LICENSE_KEY="CV-PRO-<base64_payload.hmac_signature>"
+
+# Or with custom HMAC secret (for self-built binaries)
+export CORRECTOVER_HMAC_KEY="your-hmac-secret"
+```
+
+The server prints your current plan on startup and enforces provider limits at runtime.
+License verification is offline (HMAC-SHA256) with optional device fingerprint binding.
+No data is sent to external servers — your privacy is preserved.
+
+**Get a license:** hello@correctover.com
 
 ---
 
@@ -265,6 +287,7 @@ correctover/
 ├── smithery.yaml         # Smithery 部署
 ├── glama.json            # Glama.ai 注册
 │
+├── license/              # License 验证系统
 ├── mcp/                  # MCP 协议实现
 ├── provider/             # 9 LLM Provider 管理
 ├── validator/            # 6 维契约验证

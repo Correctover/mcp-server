@@ -5,6 +5,10 @@
   "description": "The first MCP server that verifies AI outputs in real-time. Routes LLM calls through multiple providers with 6-dimension output validation (structure, schema, latency, cost, identity, integrity) and automatic self-healing. BYOK, zero-dependency, one-line JSON config for Cursor/Claude Desktop.",
   "category": "ai",
   "tags": ["mcp", "llm", "reliability", "failover", "validation", "self-healing", "cursor", "claude", "byok"],
+  "pricing": {
+    "type": "freemium",
+    "description": "Free: unlimited chat with auto-failover (max 2 providers). Pro ($99/yr): 9+ providers, 6-dimension validation, unlimited provider routing. Enterprise ($1,499/mo): private deployment + SLA + custom validation rules."
+  },
   "environmentVariables": {
     "OPENAI_API_KEY": { "description": "OpenAI API key", "required": false },
     "OPENAI_BASE_URL": { "description": "Override OpenAI base URL (proxy/mirror)", "required": false },
@@ -23,7 +27,8 @@
     "GROQ_API_KEY": { "description": "Groq API key", "required": false },
     "GROQ_BASE_URL": { "description": "Override Groq base URL", "required": false },
     "TOGETHER_API_KEY": { "description": "Together AI API key", "required": false },
-    "TOGETHER_BASE_URL": { "description": "Override Together base URL", "required": false }
+    "TOGETHER_BASE_URL": { "description": "Override Together base URL", "required": false },
+    "CORRECTOVER_LICENSE_KEY": { "description": "Pro/Enterprise license key for unlimited providers", "required": false }
   },
   "build": {
     "command": "go build -o correctover-mcp-server .",

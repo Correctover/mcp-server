@@ -1,40 +1,71 @@
-# Binaries
-correctover-mcp-server
-*.exe
-
-# Build
+# ── Build artifacts ────────────────────────────────────
 /dist/
 /build/
+correctover-mcp-server
+correctover-server.exe
 
-# OS
+# ── OS ─────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 
-# IDE
+# ── Logs ────────────────────────────────────────────────
+*.log
+
+# ── Python ─────────────────────────────────────────────
+__pycache__/
+sdk/dist/
+sdk/_engine_decompiled.py
+*.py[cod]
+*.so
+*.pyd
+*.egg-info/
+sdk/*.pyc
+
+# ── Go ─────────────────────────────────────────────────
+vendor/
+bin/
+correctover-mcp-server-*
+
+# ── Node ───────────────────────────────────────────────
+node_modules/
+package-lock.json
+
+# ── IDE ────────────────────────────────────────────────
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# Env
+# ── Env / Credentials ─────────────────────────────────
 .env
+*.pem
+*.hex
+*.bin
 
-# Go
-vendor/
+# ── .claude ────────────────────────────────────────────
+.claude/
 
-# Python
-__pycache__/
-*.py[cod]
-*.so
-*.pyd
-build/
-dist/
-*.egg-info/
+# ── Marketing — scripts & screenshots only ────────────
+marketing/scripts/
 
-# Logs
-*.log
+# ── VS Code Extension — automation artifacts ──────────
+vscode-extension/.chrome-*/
+vscode-extension/.edge-*/
+vscode-extension/.temp-*/
+vscode-extension/shots/
+vscode-extension/scripts/
+vscode-extension/*.png
+vscode-extension/*.txt
+vscode-extension/*.bin
+vscode-extension/*.hex
+vscode-extension/encrypted_github_pwd.bin
+vscode-extension/master_key.hex
 
-# Node
-node_modules/
-*.exe
-bin/
+# ── Root temp / planning files (not content) ──────────
+/email-infra-plan.md
+/findings.md
+/progress.md
+/task_plan.md
+/workflow_*.js
+*.output.json
+bash.exe.stackdump

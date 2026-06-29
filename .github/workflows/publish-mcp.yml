@@ -1,28 +1,100 @@
-name: Publish to MCP Registry
+name: Publish MCP Server Binaries
 
 on:
   push:
     tags:
-      - 'v*'
+      - 'mcp-v*'
   workflow_dispatch:
 
 permissions:
-  contents: read
-  id-token: write
+  contents: write
 
 jobs:
-  publish:
+  vet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: Run go vet
+        run: go vet ./...
+
+  build:
+    needs: vet
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+            suffix: linux-amd64
+          - os: linux
+            arch: arm64
+            suffix: linux-arm64
+          - os: darwin
+            arch: amd64
+            suffix: darwin-amd64
+          - os: darwin
+            arch: arm64
+            suffix: darwin-arm64
+          - os: windows
+            arch: amd64
+            suffix: windows-amd64.exe
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install mcp-publisher
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
         run: |
-          curl -sL "https://github.com/modelcontextprotocol/registry/releases/download/v1.0.0/mcp-publisher_1.0.0_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
-          sudo mv mcp-publisher /usr/local/bin/
+          go build -ldflags="-s -w \
+            -X github.com/Correctover/mcp-server/license.defaultHMACSecret=${{ secrets.CORRECTOVER_HMAC_SECRET || 'correctover-mcp-hmac-v1-2026' }}" \
+            -o correctover-mcp-${{ matrix.suffix }} .
+          chmod +x correctover-mcp-${{ matrix.suffix }}
 
-      - name: Authenticate via GitHub OIDC
-        run: mcp-publisher login github-oidc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: correctover-mcp-${{ matrix.suffix }}
+          path: correctover-mcp-${{ matrix.suffix }}
 
-      - name: Publish to MCP Registry
-        run: mcp-publisher publish
+  test:
+    needs: vet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: Run tests
+        run: go test ./... -v -count=1
+
+  release:
+    needs: [build, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum correctover-mcp-* > checksums.txt
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: dist/*
+          fail_on_unmatched_files: true

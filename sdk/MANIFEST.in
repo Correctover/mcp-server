@@ -1,0 +1,2 @@
+recursive-include correctover *.pyc
+recursive-include correctover/benchmark *.pyc
