@@ -8,7 +8,7 @@
 <p align="center">
   <a href="#installation"><img src="https://img.shields.io/badge/install-1%20line%20JSON-blue" alt="Install"></a>
   <a href="https://github.com/Correctover/mcp-server/stargazers"><img src="https://img.shields.io/github/stars/Correctover/mcp-server" alt="Stars"></a>
-  <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/license-Apache%202.0-green" alt="License"></a>
+  <a href="https://correctover.com"><img src="https://img.shields.io/badge/license-Proprietary-red" alt="License"></a>
 </p>
 
 ---
@@ -241,9 +241,9 @@ A: Still works. You get 6-dimension validation on every response. Failover kicks
 
 ## Enterprise Roadmap
 
-Correctover follows an **Open Core** model. The MCP protocol, provider verification, and core validation engine are open source. Enterprise features are designed for regulated industries (finance, legal, healthcare) and large-scale deployments.
+Correctover uses a **Proprietary Commercial License**. The SDK is free to integrate; the core reliability engine is proprietary. Enterprise features are designed for regulated industries (finance, legal, healthcare) and large-scale deployments.
 
-| Feature | Open Source | Enterprise |
+| Feature | SDK (Free) | Enterprise |
 |---------|:-----------:|:----------:|
 | 6-dimension validation (structure/schema/latency/cost/identity/integrity) | ✅ | ✅ |
 | Auto-failover across 9+ providers | ✅ | ✅ |
@@ -257,7 +257,7 @@ Correctover follows an **Open Core** model. The MCP protocol, provider verificat
 | **SLA guarantee** — 99.9% uptime, dedicated support | — | ✅ |
 | **Custom validation rules** — domain-specific contracts (HIPAA, SOC2, PCI) | — | ✅ |
 
-> **Why Open Core works for you:** Developers get the best open-source validation engine. CTOs get the audit trail and compliance they need to approve AI in production. No feature crippling. No bait-and-switch. Clear boundaries.
+> **Why Correctover works for you:** Developers get a powerful validation SDK. CTOs get the audit trail and compliance they need to approve AI in production. No feature crippling. No bait-and-switch. Clear boundaries.
 
 ## Data Moat
 
@@ -268,7 +268,7 @@ This data directly informs:
 - **Benchmark accuracy** — real-world reliability scores, not synthetic benchmarks
 - **Industry reports** — the *2026 MCP Production-Grade Security White Paper* (coming Q3 2026)
 
-Enterprise deployments can opt out of telemetry entirely. The data moat is powered by opt-in telemetry from the open-source tier.
+Enterprise deployments can opt out of telemetry entirely. The data moat is powered by opt-in telemetry from the SDK tier.
 
 ## Sponsor
 
@@ -288,7 +288,7 @@ For team deployments, custom validation rules, or dedicated support:
 
 ## License & Commercial
 
-This project is **Apache 2.0** licensed for the core MCP protocol and provider implementation. The license verification system (`license/` package) enables commercial features:
+This project uses a **Proprietary Commercial License**. The SDK is free to integrate. The license verification system (`license/` package) enables commercial features:
 
 | Plan | Price | Providers | Features |
 |------|-------|-----------|----------|
