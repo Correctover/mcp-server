@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-const version = '1.0.2';
+const version = '1.0.5';
 const repo = 'Correctover/mcp-server';
 
 const platform = process.platform;

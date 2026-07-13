@@ -12,7 +12,7 @@ import (
 const (
 	ProtocolVersion = "2025-11-25"
 	ServerName      = "correctover-mcp-server"
-	ServerVersion   = "1.0.3"
+	ServerVersion   = "1.0.5"
 )
 
 type ToolHandler func(args map[string]any) (*ToolCallResult, error)
