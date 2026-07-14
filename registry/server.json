@@ -2,7 +2,7 @@
   "$schema": "https://modelcontextprotocol.io/schemas/server.json",
   "name": "correctover-mcp-server",
   "description": "The MCP Reliability Layer for AI — real-time output verification, 6-dimension contract validation, and automatic self-healing for LLM calls",
-  "version": "1.0.0",
+  "version": "1.0.7",
   "homepage": "https://github.com/Correctover/mcp-server",
   "repository": "https://github.com/Correctover/mcp-server",
   "license": "Apache-2.0",
