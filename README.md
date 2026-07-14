@@ -182,6 +182,17 @@ For API proxies or compatible endpoints:
 - Platform: Linux (amd64/arm64), macOS (amd64/arm64), Windows (amd64)
 - The npm installer automatically downloads the correct binary for your platform
 
+## Commercial Support
+
+For teams building production AI agents:
+
+- **Enterprise support**: Priority bug fixes, SLA guarantees, dedicated support
+- **Custom integration**: We'll integrate Correctover into your agent stack
+- **Security audits**: We've audited 50+ MCP implementations
+- **On-premise deployment**: Run Correctover in your infrastructure
+
+**Contact**: wangguigui@correctover.com
+
 ## Links
 
 - **Protocol Spec**: [Correctover/standards](https://github.com/Correctover/standards) (CC BY 4.0)
@@ -193,3 +204,4 @@ For API proxies or compatible endpoints:
 ## License
 
 Apache 2.0 © Correctover
+
