@@ -1,8 +1,8 @@
-# Correctover — MCP Security Research & Runtime Verification
+# Correctover — MCP Runtime Security
 
-> **The first open-source MCP security research lab with real-time runtime verification.**
+> **The runtime security layer for the MCP ecosystem.**
 
-We build runtime security infrastructure for AI agent ecosystems. Our work spans MCP protocol security auditing, conformance testing, fault-tolerance engineering, and upstream contributions to major agent frameworks.
+We build the runtime security layer for AI agent ecosystems. Correctover enforces security conformance on every MCP tool call — validating LLM outputs, blocking injection attacks, preventing credential hijacking, and auto-recovering from failures at 22μs P50 latency.
 
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
 ![npm](https://img.shields.io/npm/v/correctover-mcp-server?label=npm%20%7C%20correctover-mcp-server)
@@ -48,7 +48,7 @@ The complete 20K dataset is in `./data/` — download, verify, fork, do whatever
 
 ## Research & Publications
 
-### CCS v1.0 — Conformance Standard for Agentic Runtimes
+### CCS v1.0 — Runtime Security Conformance Standard
 
 The first formal conformance standard defining how agent runtimes should validate tool execution results at runtime.
 
