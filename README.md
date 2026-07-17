@@ -1,38 +1,113 @@
-# Correctover MCP Server
+# Correctover — MCP Security Research & Runtime Verification
 
-> **The first MCP server that verifies AI outputs in real-time.**
+> **The first open-source MCP security research lab with real-time runtime verification.**
 
-Correctover sits between your AI tool (Cursor, Claude Desktop, Windsurf) and LLM providers, validating every response across **6 dimensions** with automatic self-healing failover.
+We build runtime security infrastructure for AI agent ecosystems. Our work spans MCP protocol security auditing, conformance testing, fault-tolerance engineering, and upstream contributions to major agent frameworks.
 
 ![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)
-![npm](https://img.shields.io/npm/v/correctover-mcp-server)
-![Node](https://img.shields.io/badge/node-%3E%3D18-green.svg)
-![Glama](https://glama.ai/mcp/servers/Correctover/mcp-server/badge)
+![npm](https://img.shields.io/npm/v/correctover-mcp-server?label=npm%20%7C%20correctover-mcp-server)
+![npm](https://img.shields.io/npm/v/correctover?label=npm%20%7C%20correctover)
+![PyPI](https://img.shields.io/pypi/v/correctover?label=pypi%20%7C%20correctover)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21234580.svg)](https://doi.org/10.5281/zenodo.21234580)
 
-## What It Does
+---
 
-When an LLM returns a response, Correctover validates it in real-time:
+## What We Do
 
-| Dimension | What It Checks |
-|-----------|---------------|
-| **Structure** | JSON/YAML well-formedness, required fields present |
-| **Schema** | Type correctness, enum compliance, nested object validation |
-| **Latency** | Response time within SLA thresholds |
-| **Cost** | Token usage and cost within budget limits |
-| **Identity** | Output matches expected model/provider identity |
-| **Integrity** | No content tampering, hash verification |
+| Layer | What | Where |
+|-------|------|-------|
+| **Runtime Verification** | 6-dimension output validation (structure, schema, latency, cost, identity, integrity) + auto-failover | `correctover-mcp-server` |
+| **Agent Governance SDK** | Synchronous interceptor-based governance — fail-closed by design | `correctover-ccs` (PyPI) |
+| **Security Audits** | MCP protocol vulnerability research — CVE-class findings across 50+ implementations | [mcp-security-audits](https://github.com/Correctover/mcp-security-audits) |
+| **Conformance Standard** | CCS v1.0 — formal standard for agentic runtime verification | [standards](https://github.com/Correctover/standards) |
+| **Fault Taxonomy** | 215 fault types, 19 CVEs, 561 fault variants cataloged | Internal knowledge base |
 
-If any dimension fails, the engine **auto-retries or fails over** to another provider — then validates again. Every response that reaches your application has passed all 6 checks.
+---
 
-## Quick Start
+## Real Data — Not Benchmarks
 
-### Install via npm
+We don't simulate. We collect real API responses from production MCP servers and verify them.
+
+### 20,000 Verified API Traces
+
+| Dataset | Records | Size | Format |
+|---------|---------|------|--------|
+| CCS 20K Verification Subset | 20,000 | 18 MB | JSONL ([download](./data/Correctover-CCS-20K-Verification-Subset.jsonl)) |
+
+**Collection methodology:**
+- 43.6 minutes of continuous collection at 13.7 API calls/second
+- 68.88% conformance rate (13,776 conformant / 6,224 non-conformant)
+- 30% fault injection rate for stress testing
+- Every record includes: request, response, latency, validation result, fault classification
+
+**Third-party independent verification:** 120,426 conformance re-calculations by [@babyblueviper1](https://github.com/babyblueviper1) — full consistency confirmed.
+
+The complete 20K dataset is in `./data/` — download, verify, fork, do whatever you want. No gatekeeping.
+
+---
+
+## Research & Publications
+
+### CCS v1.0 — Conformance Standard for Agentic Runtimes
+
+The first formal conformance standard defining how agent runtimes should validate tool execution results at runtime.
+
+- **Paper:** [CCS Standard v1.0 Final (PDF)](./papers/CCS-Standard-v1.0.pdf)
+- **DOI:** [10.5281/zenodo.21234580](https://doi.org/10.5281/zenodo.21234580)
+- **Protocol Spec:** [RFC-001](https://github.com/Correctover/standards/blob/main/docs/RFC-001-CCS-Protocol-Specification.md) | [RFC-002](https://github.com/Correctover/standards/blob/main/docs/RFC-002-CCS-Symbol-Standard.md)
+
+**Key findings from 20K real traces:**
+- P50 validation latency: **22μs**
+- Self-heal rate: **97.4%** (engine auto-retries/fails over on failed validation, then re-validates)
+- Rule coverage: 88 detection rules (64 high-confidence)
+- 561 distinct fault variants cataloged across all major LLM providers
+
+### Fault Taxonomy
+
+We maintain a living fault taxonomy derived from real-world MCP server failures:
+- **215 distinct fault types** classified across 7 severity levels
+- **19 CVE-class vulnerabilities** identified across MCP implementations
+- Categories: RCE, SSRF, cloud credential hijacking, path traversal, output injection, privilege escalation
+
+---
+
+## Upstream PR Contributions
+
+We don't just report — we fix. Our contributions go directly into major agent frameworks:
+
+| PR | Framework | Status | What |
+|----|-----------|--------|------|
+| [ferro-labs#197](https://github.com/ferro-labs/ferro-labs/pull/197) | Ferro Labs | OPEN | Runtime validation integration |
+| [CrewAI#6432](https://github.com/crewAIInc/crewAI/pull/6432) | CrewAI | 10 commits | GuardrailProvider — runtime governance protocol |
+| [CrewAI#6411](https://github.com/crewAIInc/crewAI/pull/6411) | CrewAI | Discussion | Defining runtime verification authority |
+| [agent-governance-toolkit#3347](https://github.com/microsoft/agent-governance-toolkit/pull/3347) | Microsoft | Under review | Runtime threat scanner — recursive nested-arg scanning, SSRF gaps, credential redaction, path boundary fixes |
+
+---
+
+## Community Validation
+
+Real researchers using our work in production:
+
+| Researcher | Framework | Contribution |
+|-----------|-----------|-------------|
+| [@pshkv](https://github.com/pshkv) (AutoGen maintainer) | AutoGen | Adopted Required(τ)⊆Supported(τ) framework for tool governance |
+| [@humbl-dev](https://github.com/humbl-dev) | CrewAI | Testing two-layer governance structure |
+| [@safal207](https://github.com/safal207) | CrewAI | Implemented GuardrailProvider based on our design (10 commits) |
+| [@babyblueviper1](https://github.com/babyblueviper1) | Independent | 120,426 independent conformance re-calculations |
+| [@Tuttotorna](https://github.com/Tuttotorna) | PHI-OMEGA | ICLR paper collaboration on runtime verification |
+| [@XYG-LUNA](https://github.com/XYG-LUNA) | CrewAI | Idempotency analysis and interaction |
+
+---
+
+## MCP Server — Product
+
+The runtime verification engine packaged as an MCP server for your AI tools.
+
+### Quick Start
 
 ```bash
 npm install -g correctover-mcp-server
 ```
-
-### Configure your AI tool
 
 Add to your `mcp.json` (Cursor, Claude Desktop, Windsurf):
 
@@ -43,17 +118,45 @@ Add to your `mcp.json` (Cursor, Claude Desktop, Windsurf):
       "command": "correctover-mcp-server",
       "env": {
         "OPENAI_API_KEY": "sk-...",
-        "ANTHROPIC_API_KEY": "sk-ant-...",
-        "DEEPSEEK_API_KEY": "sk-..."
+        "ANTHROPIC_API_KEY": "sk-ant-..."
       }
     }
   }
 }
 ```
 
-That's it. BYOK (Bring Your Own Key) — your keys stay on your machine. No proxy, no data collection.
+BYOK — your keys stay on your machine. No proxy, no data collection.
 
-## Supported Providers
+### How It Works
+
+```
+Your AI Tool (Cursor / Claude Desktop / Windsurf)
+        │
+        ▼
+┌─────────────────────────────┐
+│   Correctover MCP Server    │
+│   ┌───────────────────────┐ │
+│   │  6-Dim Validator      │ │
+│   │  ├─ Structure         │ │
+│   │  ├─ Schema            │ │
+│   │  ├─ Latency           │ │
+│   │  ├─ Cost              │ │
+│   │  ├─ Identity          │ │
+│   │  └─ Integrity         │ │
+│   └───────────────────────┘ │
+│          │                  │
+│   ┌──────▼──────┐           │
+│   │ Failover    │           │
+│   │ Engine      │           │
+│   └──────┬──────┘           │
+└──────────┼──────────────────┘
+           │
+    ┌──────┼──────┬──────────┐
+    ▼      ▼      ▼          ▼
+ OpenAI  Anthropic  DeepSeek  Qwen ...
+```
+
+### Supported Providers
 
 | Provider | Models | Env Variable |
 |----------|--------|-------------|
@@ -62,146 +165,83 @@ That's it. BYOK (Bring Your Own Key) — your keys stay on your machine. No prox
 | DeepSeek | DeepSeek-V3, DeepSeek-R1 | `DEEPSEEK_API_KEY` |
 | Moonshot/Kimi | Moonshot-v1 | `MOONSHOT_API_KEY` |
 | Alibaba Qwen | Qwen-Max, Qwen-Plus | `DASHSCOPE_API_KEY` |
-| Zhipu/GLM | GLM-4 | `ZHIPU_API_KEY` |
-| SiliconFlow | Multiple open models | `SILICONFLOW_API_KEY` |
 | Groq | Llama, Mixtral | `GROQ_API_KEY` |
 | Together | Llama, Mistral | `TOGETHER_API_KEY` |
 
-Set at least one API key. Correctover auto-detects configured providers.
+### Tools
 
-## Tools
+| Tool | Description |
+|------|-------------|
+| `chat` | Verified chat — 6-dim validation + auto-failover |
+| `health` | Check provider status |
+| `providers` | Detailed provider configuration |
+| `stats` | Session metrics: calls, pass rate, failover count |
+| `validation_history` | Query recent validation results (ring buffer, 500 records) |
 
-### `chat` — Verified Chat
-Send a message to any LLM with automatic 6-dimension validation. Routes through the best provider, validates output, self-heals on failure.
+---
 
-```json
-{
-  "messages": [{"role": "user", "content": "Generate a JSON config"}],
-  "model": "auto"
-}
+## CCS SDK — Agent Governance
+
+Python SDK for embedding governance into agent frameworks. Fail-closed by design.
+
+```bash
+pip install correctover-ccs
 ```
 
-**Response includes:**
-- The LLM output text
-- A validation report showing which dimensions passed/failed
-- Failover count (if any)
+```python
+from ccs import govern
 
-### `health` — Health Check
-Check which providers are configured and ready before starting work.
+@govern(policy="default")
+def my_tool(args: dict) -> str:
+    return "result"
 
-### `providers` — Provider Details
-See detailed configuration for all supported providers (base URLs, models, status).
-
-### `stats` — Session Statistics
-Review session metrics: total calls, validation pass rate, failover count, active providers, server version.
-
-### `validation_history` — Validation Records
-Query recent validation results with pagination (ring buffer, 500 records). Each record includes provider, model, latency, pass/fail status, score, and failure reasons.
-
-## Prompts
-
-| Prompt | Description |
-|--------|-------------|
-| `verify-output` | Verify AI-generated content for correctness across 6 dimensions |
-| `compare-providers` | Compare responses from multiple providers on the same prompt |
-| `reliability-audit` | Run a comprehensive reliability audit on your provider setup |
-
-## How It Works
-
-```
-Your AI Tool (Cursor/Claude Desktop)
-        │
-        ▼
-┌─────────────────────────┐
-│   Correctover MCP       │
-│   ┌───────────────────┐ │
-│   │ 6-Dim Validator   │ │
-│   │ ┌─ Structure      │ │
-│   │ ├─ Schema         │ │
-│   │ ├─ Latency        │ │
-│   │ ├─ Cost           │ │
-│   │ ├─ Identity       │ │
-│   │ └─ Integrity      │ │
-│   └───────────────────┘ │
-│          │              │
-│   ┌──────▼──────┐       │
-│   │ Failover    │       │
-│   │ Engine      │       │
-│   └──────┬──────┘       │
-└──────────┼──────────────┘
-           │
-    ┌──────┼──────┬────────┐
-    ▼      ▼      ▼        ▼
- OpenAI  Anthropic  DeepSeek  Qwen ...
+# Governance evaluates BEFORE function runs
+# If denied → PermissionError, function never executes
 ```
 
-1. **Route** → Select best provider by priority and health
-2. **Call** → Send request to LLM provider
-3. **Validate** → Run 6-dimension checks on response
-4. **Pass?** → If yes, return to your AI tool
-5. **Fail?** → Auto-retry or failover to next provider → Go to step 2
+**Supported frameworks:** CrewAI, AutoGen, LangGraph/LangChain
 
-## Failover ≠ Correctover
-
-Simple failover just switches providers when one goes down. Correctover switches **and verifies the output is correct** before delivering it. Every response passes through 6-dimension validation — if it fails, the engine auto-retries or fails over, then re-validates.
-
-## Configuration
-
-### Custom Base URLs
-
-For API proxies or compatible endpoints:
-
-```json
-{
-  "env": {
-    "OPENAI_API_KEY": "your-key",
-    "OPENAI_BASE_URL": "https://your-proxy.example.com/v1"
-  }
-}
+```
+Observer hooks (default):  governance_crash → tool EXECUTES ❌
+CCS decorators (ours):     governance_crash → tool BLOCKED ✅
 ```
 
-### Environment Variables
+---
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `OPENAI_API_KEY` | No* | OpenAI API key |
-| `ANTHROPIC_API_KEY` | No* | Anthropic API key |
-| `DEEPSEEK_API_KEY` | No* | DeepSeek API key |
-| `MOONSHOT_API_KEY` | No* | Moonshot/Kimi API key |
-| `DASHSCOPE_API_KEY` | No* | Alibaba DashScope (Qwen) |
-| `ZHIPU_API_KEY` | No* | Zhipu/GLM API key |
-| `SILICONFLOW_API_KEY` | No* | SiliconFlow API key |
-| `GROQ_API_KEY` | No* | Groq API key |
-| `TOGETHER_API_KEY` | No* | Together AI API key |
+## Security Audit Reports
 
-*At least one API key is required.
+We publish detailed security audits of MCP server implementations:
 
-## System Requirements
+→ [mcp-security-audits](https://github.com/Correctover/mcp-security-audits)
 
-- Node.js ≥ 18.0.0
-- Platform: Linux (amd64/arm64), macOS (amd64/arm64), Windows (amd64)
-- The npm installer automatically downloads the correct binary for your platform
+**Methodology:** Source code analysis → fault injection → runtime verification → CVE classification
 
-## Commercial Support
+**Findings to date:** 506 security findings across 3 major repositories, 5 vulnerability types confirmed cross-repo.
 
-For teams building production AI agents:
+---
 
-- **Enterprise support**: Priority bug fixes, SLA guarantees, dedicated support
-- **Custom integration**: We'll integrate Correctover into your agent stack
-- **Security audits**: We've audited 50+ MCP implementations
-- **On-premise deployment**: Run Correctover in your infrastructure
+## Ecosystem & Links
 
-**Contact**: wangguigui@correctover.com
+| Resource | Link |
+|----------|------|
+| CCS Standard (paper) | [DOI: 10.5281/zenodo.21234580](https://doi.org/10.5281/zenodo.21234580) |
+| CCS Standard (GitHub) | [Correctover/standards](https://github.com/Correctover/standards) |
+| MCP Server (npm) | [correctover-mcp-server](https://www.npmjs.com/package/correctover-mcp-server) |
+| CCS SDK (PyPI) | [correctover](https://pypi.org/project/correctover/) |
+| Security Audits | [Correctover/mcp-security-audits](https://github.com/Correctover/mcp-security-audits) |
+| Agent Governance | [Correctover/agent-governance-toolkit](https://github.com/Correctover/agent-governance-toolkit) (fork with PRs) |
+| Glama | [correctover/mcp-server](https://glama.ai/mcp/servers/Correctover/mcp-server) |
+| Protocol Spec | [standards/docs/RFC-001](https://github.com/Correctover/standards/blob/main/docs/RFC-001-CCS-Protocol-Specification.md) |
+| Website | [correctover.com](https://correctover.com) |
 
-## Links
+---
 
-- **Protocol Spec**: [Correctover/standards](https://github.com/Correctover/standards) (CC BY 4.0)
-- **npm Package**: [correctover-mcp-server](https://www.npmjs.com/package/correctover-mcp-server)
-- **Glama**: [correctover/mcp-server](https://glama.ai/mcp/servers/Correctover/mcp-server)
-- **Website**: [correctover.com](https://correctover.com)
-- **Issues**: [GitHub Issues](https://github.com/Correctover/mcp-server/issues)
+## Contact
+
+**Security reports**: wangguigui@correctover.com  
+**BD / Enterprise**: wangguigui@correctover.com  
+**GitHub**: [@Correctover](https://github.com/Correctover)
 
 ## License
 
 Apache 2.0 © Correctover
-
