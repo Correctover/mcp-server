@@ -180,6 +180,22 @@ Your AI Tool (Cursor / Claude Desktop / Windsurf)
 
 ---
 
+## Ecosystem Adoption
+
+Real download numbers from public package registries (last 30 days):
+
+| Package | Registry | Monthly Downloads |
+|---------|----------|-------------------|
+| correctover-mcp-server | npm | 1,564 |
+| correctover | npm | 1,034 |
+| correctover-ccs | npm | 400 |
+| correctover | PyPI | 1,436 |
+| **Total** | | **4,434/month** |
+
+All organic growth — no paid promotion. CCS standard package seeing highest growth rate (tens of thousands percent increase from baseline).
+
+---
+
 ## CCS SDK — Agent Governance
 
 Python SDK for embedding governance into agent frameworks. Fail-closed by design.
