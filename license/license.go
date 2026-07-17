@@ -65,6 +65,8 @@ var planProviderLimits = map[Plan]int{
 }
 
 // planKeyPrefixes maps license key prefix → plan.
+// Supports both Correctover (CV-) and legacy NeuralBridge (NB-) prefixes.
+// Legacy prefixes keep backward compatibility with existing issued keys.
 var planKeyPrefixes = map[string]struct {
 	plan    Plan
 	planStr string
@@ -72,6 +74,13 @@ var planKeyPrefixes = map[string]struct {
 	"CV-TRL-": {PlanTrial, planStrTrial},
 	"CV-PRO-": {PlanPro, planStrPro},
 	"CV-ENT-": {PlanEnterprise, planStrEnterprise},
+	// Legacy NeuralBridge prefixes (backward compatibility)
+	"NB-TRL-": {PlanTrial, planStrTrial},
+	"NB-PRO-": {PlanPro, planStrPro},
+	"NB-ENT-": {PlanEnterprise, planStrEnterprise},
+	"NB-MON-": {PlanPro, planStrPro},     // monthly → Pro tier
+	"NB-ANN-": {PlanPro, planStrPro},     // annual → Pro tier
+	"NB-LTM-": {PlanEnterprise, planStrEnterprise}, // lifetime → Enterprise tier
 }
 
 // defaultHMACSecret is compiled into the binary. Override at build time:
@@ -136,9 +145,11 @@ func (l *License) Verify() error {
 
 	// Determine plan from key prefix
 	var matched bool
+	var isLegacyPrefix bool
 	for prefix, info := range planKeyPrefixes {
 		if strings.HasPrefix(l.Key, prefix) {
 			matched = true
+			isLegacyPrefix = strings.HasPrefix(prefix, "NB-")
 			l.Plan = info.plan
 			encoded := l.Key[len(prefix):]
 
@@ -148,9 +159,21 @@ func (l *License) Verify() error {
 				return fmt.Errorf("decode failed: %w", err)
 			}
 
-			if err := verifySignature(payload, sig); err != nil {
+			// Try primary HMAC secret first
+			sigErr := verifySignature(payload, sig)
+			if sigErr != nil && isLegacyPrefix {
+				// Legacy NB- prefix keys may be signed with a different (historical) secret.
+				// Try each known legacy secret as fallback.
+				for _, legacySecret := range legacyHMACSecrets {
+					sigErr = verifySignatureWithSecret(payload, sig, []byte(legacySecret))
+					if sigErr == nil {
+						break
+					}
+				}
+			}
+			if sigErr != nil {
 				l.Valid = false
-				return fmt.Errorf("signature invalid: %w", err)
+				return fmt.Errorf("signature invalid: %w", sigErr)
 			}
 
 			licInfo, err := parsePayload(payload)
@@ -169,7 +192,7 @@ func (l *License) Verify() error {
 
 	if !matched {
 		l.Valid = false
-		return fmt.Errorf("unknown license key prefix; expected CV-TRL-, CV-PRO-, or CV-ENT-")
+		return fmt.Errorf("unknown license key prefix; expected CV-TRL-, CV-PRO-, CV-ENT-, or legacy NB- prefix")
 	}
 
 	return nil
@@ -286,6 +309,18 @@ func verifySignature(payload, sigHex string) error {
 	return nil
 }
 
+// verifySignatureWithSecret is like verifySignature but with an explicit secret.
+// Used for legacy NB- prefix key fallback verification.
+func verifySignatureWithSecret(payload, sigHex string, secret []byte) error {
+	mac := hmac.New(sha256.New, secret)
+	mac.Write([]byte(payload))
+	expected := hex.EncodeToString(mac.Sum(nil))
+	if !hmac.Equal([]byte(sigHex), []byte(expected)) {
+		return fmt.Errorf("HMAC mismatch")
+	}
+	return nil
+}
+
 // parsePayload extracts plan, expiry, and customer from the JSON payload.
 func parsePayload(payloadStr string) (*licensePayload, error) {
 	var raw struct {
@@ -306,6 +341,10 @@ func parsePayload(payloadStr string) (*licensePayload, error) {
 		planStrTrial:     PlanTrial,
 		planStrPro:       PlanPro,
 		planStrEnterprise: PlanEnterprise,
+		// Legacy plan names (backward compatibility with FC-generated keys)
+		"monthly": PlanPro,
+		"annual":  PlanPro,
+		"lifetime": PlanEnterprise,
 	}
 
 	plan, ok := planMap[raw.P]
@@ -390,8 +429,19 @@ func hmacSign(data string) string {
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
+// legacyHMACSecrets is a list of known old HMAC secrets that are tried as fallback
+// for legacy NB- prefix keys. This ensures previously issued keys remain valid.
+var legacyHMACSecrets = []string{
+	"",                        // FC default when env var not set
+	"NB-SK-2026-6c5ce7-a",    // Previous FC NB_HMAC_SECRET value
+}
+
 // getHMACSecret returns the HMAC key: env var overrides the compiled default.
+// Priority: CORRECTOVER_HMAC_SECRET > CORRECTOVER_HMAC_KEY > compiled defaultHMACSecret.
 func getHMACSecret() []byte {
+	if env := os.Getenv("CORRECTOVER_HMAC_SECRET"); env != "" {
+		return []byte(env)
+	}
 	if env := os.Getenv("CORRECTOVER_HMAC_KEY"); env != "" {
 		return []byte(env)
 	}

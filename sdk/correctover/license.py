@@ -85,10 +85,15 @@ PLAN_MONTHLY = "monthly"
 PLAN_LIFETIME = "lifetime"
 
 # All plans that unlock repair capability
-_PRO_PLANS = {PLAN_PRO, PLAN_ENTERPRISE, PLAN_TRIAL, PLAN_MONTHLY, PLAN_LIFETIME}
+_PRO_PLANS = {PLAN_PRO, PLAN_ENTERPRISE, PLAN_TRIAL, PLAN_MONTHLY, PLAN_LIFETIME, "annual"}
 
-# Key prefix → plan mapping (支持新旧格式)
+# Key prefix → plan mapping (支持新旧格式 + Correctover CV- 格式)
 _PREFIX_MAP = {
+    # Correctover (CV-) 格式 — 新签发 Key
+    "CV-TRL-": PLAN_TRIAL,
+    "CV-PRO-": PLAN_PRO,
+    "CV-ENT-": PLAN_ENTERPRISE,
+    # Legacy NeuralBridge (NB-) 格式 — 向后兼容
     "NB-TRL3-": PLAN_TRIAL,     # v4.0 试用3天
     "NB-MON-": PLAN_MONTHLY,    # v4.0 月付
     "NB-ANN-": PLAN_PRO,        # v4.0 年付 (SDK 内部 = pro)
@@ -731,7 +736,7 @@ def _verify_offline(key: str) -> LicenseInfo:
 
     if declared_plan is None:
         return LicenseInfo(PLAN_FREE, False, "", 0,
-                           "Key must start with NB-TRL3-/NB-MON-/NB-ANN-/NB-LTM-/NB-PRO-/NB-ENT-")
+                           "Key must start with CV-TRL-/CV-PRO-/CV-ENT- or legacy NB- prefix")
 
     try:
         decoded = base64.urlsafe_b64decode(encoded + "==").decode("utf-8")
@@ -753,7 +758,12 @@ def _verify_offline(key: str) -> LicenseInfo:
             return LicenseInfo(PLAN_FREE, False, "", 0, f"Key missing field '{f}'")
 
     expected_sig = _hmac_sign(payload_str)
-    if not hmac.compare_digest(sig_hex, expected_sig):
+    sig_ok = hmac.compare_digest(sig_hex, expected_sig)
+    # Legacy NB- prefix keys may use empty HMAC secret — try fallback
+    if not sig_ok and key.startswith("NB-"):
+        legacy_sig = hmac.new(b"", payload_str.encode("utf-8"), hashlib.sha256).hexdigest()
+        sig_ok = hmac.compare_digest(sig_hex, legacy_sig)
+    if not sig_ok:
         return LicenseInfo(PLAN_FREE, False, "", 0, "Key signature invalid — forged or corrupted")
 
     if payload["e"] != 0:
