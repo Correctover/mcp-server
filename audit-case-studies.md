@@ -1,6 +1,6 @@
 # MCP Security Audit — Case Studies
 
-> **506 findings across 3 major repositories | 19 CVE-class vulnerabilities | 5 cross-repo vulnerability patterns**
+> **506 scanner findings across 2,000 MCP implementations | 70+ submitted to bounty programs | 8 verified PoCs**
 
 All findings derived from CCS diagnostic engine analysis of publicly available MCP server implementations. Each finding includes source code location, vulnerability classification, and CVSS scoring.
 
@@ -9,25 +9,27 @@ All findings derived from CCS diagnostic engine analysis of publicly available M
 ## Methodology
 
 ```
-Source Code Analysis → Pattern Matching (88 CCS rules) → Fault Injection → Runtime Verification → CVSS Classification
+Source Code Analysis → Pattern Matching (88 CCS rules) → Deduplication → Triage → Bounty Submission
 ```
 
 - **Scope**: Top 2,000 MCP server implementations by npm/PyPI download volume
 - **Detection engine**: CCS fault taxonomy v2.5 — 215 fault types, 88 detection rules (64 high-confidence)
-- **Validation**: Each finding verified with reproducible proof-of-concept before disclosure
+- **Validation status**: 506 findings are automated scanner outputs after deduplication. Of these, ~70 have been submitted to bounty programs (huntr, ZDI, MSRC), and 8 have verified PoCs with accepted advisory/issue reports.
 
 ---
 
 ## Scan Coverage Summary
 
-| Scan Phase | Target Scope | Findings | Date |
+| Scan Phase | Target Scope | Raw Findings | Date |
 |---|---|---|---|
 | Phase 1 | MCP Top 20 (by downloads) | 99 | 2026-07-13 |
 | Phase 2 | MCP Top 11 (manual code review) | 4 confirmed critical | 2026-07-13 |
 | Phase 3 | MCP Top 300 | 490 | 2026-07-12 |
 | Phase 4 | MCP 501–2000 | 1,810 | 2026-07-13 |
 | **Total (pre-dedup)** | **2,000 implementations** | **2,403** | |
-| After dedup & validation | 3 anchor repos + ecosystem | **506 unique** | |
+| After dedup | 3 anchor repos + ecosystem | **506 unique** | |
+| Submitted to bounty programs | huntr / ZDI / MSRC | **~70** | |
+| Verified PoC with accepted report | GitHub Advisory/Issue | **8** | |
 
 ---
 
@@ -119,6 +121,8 @@ These 5 vulnerability types were found consistently across multiple independent 
 
 ## Verified Proof-of-Concept (PoC) Portfolio
 
+These 8 findings have been manually verified with reproducible PoCs and have accepted reports:
+
 | # | Target | Vulnerability | CVSS | PoC Status |
 |---|---|---|---|---|
 | 1 | LiteLLM | MCP SSRF | 8.6 | ✅ Verified — GHSA-g8hw-w2cf-jg6j Accepted |
@@ -166,7 +170,7 @@ Full taxonomy maintained in CCS diagnostic engine (v2.5):
 
 ## Reproduction
 
-All findings reproducible using CCS diagnostic engine:
+The 8 verified PoCs above are fully reproducible. The remaining 498 scanner findings can be re-detected using the CCS diagnostic engine, though not all have been manually verified as exploitable:
 
 ```bash
 pip install correctover-ccs
