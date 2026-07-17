@@ -54,14 +54,14 @@ IMAP_DEFAULT_PLAN = os.environ.get("NB_IMAP_DEFAULT_PLAN", "trial")
 IMAP_KEYWORDS = ["license", "key", "授权", "激活", "试用", "trial", "pro", "购买", "buy"]
 
 PLANS = {
-    # 新3档
-    "pro":        {"prefix": "NB-PRO-", "days": 365,   "label": "Pro专业版",     "en": "Pro",              "price": 699,  "price_label": "¥699/年", "max_devices": 1},
-    "enterprise": {"prefix": "NB-ENT-", "days": 365,   "label": "Enterprise企业版", "en": "Enterprise",    "price": 2999, "price_label": "¥2,999/年", "max_devices": 10},
-    # Legacy（兼容旧key）
-    "trial":      {"prefix": "NB-TRL-", "days": 7,     "label": "试用版(7天)",   "en": "Trial (7 Days)",   "price": 0,    "price_label": "免费", "max_devices": 1},
-    "monthly":    {"prefix": "NB-MON-", "days": 30,    "label": "月卡(30天)",    "en": "Monthly",          "price": 29,   "price_label": "¥29/月", "max_devices": 1},
-    "annual":     {"prefix": "NB-ANN-", "days": 365,   "label": "年卡(365天)",   "en": "Annual",           "price": 699,  "price_label": "¥699/年", "max_devices": 1},
-    "lifetime":   {"prefix": "NB-LTM-", "days": 36500, "label": "永久授权",      "en": "Lifetime",         "price": 299,  "price_label": "¥299", "max_devices": 1},
+    # 新3档 — CV- 前缀（Correctover 品牌）
+    "pro":        {"prefix": "CV-PRO-", "days": 365,   "label": "Pro专业版",     "en": "Pro",              "price": 699,  "price_label": "¥699/年", "max_devices": 1},
+    "enterprise": {"prefix": "CV-ENT-", "days": 365,   "label": "Enterprise企业版", "en": "Enterprise",    "price": 2999, "price_label": "¥2,999/年", "max_devices": 10},
+    # Legacy（兼容旧key，保留 NB- 和 CV- 双前缀）
+    "trial":      {"prefix": "CV-TRL-", "days": 7,     "label": "试用版(7天)",   "en": "Trial (7 Days)",   "price": 0,    "price_label": "免费", "max_devices": 1},
+    "monthly":    {"prefix": "CV-MON-", "days": 30,    "label": "月卡(30天)",    "en": "Monthly",          "price": 29,   "price_label": "¥29/月", "max_devices": 1},
+    "annual":     {"prefix": "CV-ANN-", "days": 365,   "label": "年卡(365天)",   "en": "Annual",           "price": 699,  "price_label": "¥699/年", "max_devices": 1},
+    "lifetime":   {"prefix": "CV-LTM-", "days": 36500, "label": "永久授权",      "en": "Lifetime",         "price": 299,  "price_label": "¥299", "max_devices": 1},
 }
 
 # 使用 OSS 存储 license 数据（FC 无本地持久化）
@@ -246,7 +246,7 @@ engine = run(license_key="{result['key']}")</pre>
 <tr><td style="padding:4px 8px;font-weight:bold;">流水号</td><td style="padding:4px 8px;">{result['issue_id']}</td></tr>
 </table>
 </body></html>"""
-    _send_email(NOTIFY_EMAIL, f"[NB] 新签发 {plan_label} — {customer_email}", notify_body)
+    _send_email(NOTIFY_EMAIL, f"[CV] 新签发 {plan_label} — {customer_email}", notify_body)
 
 
 def _send_renew_email(customer_email, result):
@@ -267,7 +267,7 @@ def _send_renew_email(customer_email, result):
 <p style="color:#888;font-size:12px;">Correctover Team — correctover.com</p>
 </body></html>"""
     _send_email(customer_email, f"Correctover {plan_label} 续费成功", body)
-    _send_email(NOTIFY_EMAIL, f"[NB] 续费 {plan_label} — {customer_email}", f"<p>客户 {customer_email} 已续费 {plan_label}，新到期日 {exp_str}</p>")
+    _send_email(NOTIFY_EMAIL, f"[CV] 续费 {plan_label} — {customer_email}", f"<p>客户 {customer_email} 已续费 {plan_label}，新到期日 {exp_str}</p>")
 
 
 def _send_expired_email(customer_email, plan_label):
@@ -359,7 +359,7 @@ def verify_key(key, device_id=None):
     if not key or not isinstance(key, str):
         return {"valid": False, "plan": "community", "message": "No key provided"}
     key = key.strip()
-    prefix_map = [("NB-PRO-","pro"),("NB-ENT-","enterprise"),("NB-TRL-","trial"),("NB-MON-","monthly"),("NB-ANN-","annual"),("NB-LTM-","lifetime")]
+    prefix_map = [("CV-PRO-","pro"),("CV-ENT-","enterprise"),("CV-TRL-","trial"),("CV-MON-","monthly"),("CV-ANN-","annual"),("CV-LTM-","lifetime"),("NB-PRO-","pro"),("NB-ENT-","enterprise"),("NB-TRL-","trial"),("NB-MON-","monthly"),("NB-ANN-","annual"),("NB-LTM-","lifetime")]
     declared_plan = None
     encoded = None
     for p, n in prefix_map:
@@ -690,7 +690,7 @@ def _xunhu_notify(params):
     if customer_email and "@" in customer_email:
         # 有客户邮箱，直接发给客户
         _send_license_email(customer_email, result)
-        _send_email(NOTIFY_EMAIL, f"[NB] 💰 虎皮椒收款 ¥{total_fee} — {result['plan_label']}",
+        _send_email(NOTIFY_EMAIL, f"[CV] 💰 虎皮椒收款 ¥{total_fee} — {result['plan_label']}",
             f"<p>客户 {customer_email} 付款 ¥{total_fee}，已自动签发并邮件发送。</p>"
             f"<p>方案: {result['plan_label']} | Key: {result['key']}</p>")
     else:
@@ -706,7 +706,7 @@ def _xunhu_notify(params):
 </table>
 <p>⚠️ 虎皮椒回调无客户邮箱，请手动发送 License Key 给客户。</p>
 </body></html>"""
-        _send_email(NOTIFY_EMAIL, f"[NB] 💰 虎皮椒收款 ¥{total_fee} — {result['plan_label']}", notify_body)
+        _send_email(NOTIFY_EMAIL, f"[CV] 💰 虎皮椒收款 ¥{total_fee} — {result['plan_label']}", notify_body)
 
     return "success", True
 
@@ -843,7 +843,7 @@ engine = run(license_key="{result['key']}")</pre>
                 ok = _send_email(from_addr, reply_subject, reply_body)
 
                 # 同时通知管理员
-                _send_email(NOTIFY_EMAIL, f"[NB] 📧 邮件自动签发 {plan_label} → {from_addr}",
+                _send_email(NOTIFY_EMAIL, f"[CV] 📧 邮件自动签发 {plan_label} → {from_addr}",
                     f"<p>收到来自 {from_name} &lt;{from_addr}&gt; 的邮件，已自动签发：</p>"
                     f"<p>主题: {subject}</p>"
                     f"<p>套餐: {plan_label}</p>"
@@ -1088,12 +1088,37 @@ def handler(environ, start_response):
             status = "401 Unauthorized"
         else:
             to = body.get("to", NOTIFY_EMAIL)
-            ok = _send_email(to, "Correctover License 邮件测试 ✅", """<html><body>
-<h2>✅ 邮件系统测试成功</h2>
-<p>Correctover License API 的邮件发送功能已就绪。</p>
-<p style="color:#888;font-size:12px;">Correctover License System</p>
+            db = _db_load("issued.json")
+            now = int(time.time())
+            total_keys = len(db)
+            active_keys = sum(1 for e in db if e.get("expires_at") == 0 or e.get("expires_at", 0) > now)
+            plan_counts = {}
+            for e in db:
+                p = e.get("plan", "unknown")
+                plan_counts[p] = plan_counts.get(p, 0) + 1
+            plans_summary = ", ".join(f"{p}={c}" for p, c in sorted(plan_counts.items()))
+            ok = _send_email(to, f"✅ Correctover 邮件系统测试 — {total_keys} Keys", f"""<html><body style="font-family:Arial,sans-serif;">
+<h2 style="color:#6c5ce7;">✅ 邮件系统 — 实时数据测试</h2>
+<p>以下数据直接从 OSS 数据库读取，全部为 <strong>动态真实数据</strong>：</p>
+<table style="border:1px solid #ddd;border-collapse:collapse;width:100%;">
+<tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold;">数据库时间</td>
+    <td style="padding:8px;border:1px solid #ddd;">{time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime(now))}</td></tr>
+<tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold;">总签发 Key 数</td>
+    <td style="padding:8px;border:1px solid #ddd;">{total_keys}</td></tr>
+<tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold;">当前有效</td>
+    <td style="padding:8px;border:1px solid #ddd;">{active_keys}</td></tr>
+<tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold;">按套餐分布</td>
+    <td style="padding:8px;border:1px solid #ddd;">{plans_summary}</td></tr>
+<tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold;">SMTP 状态</td>
+    <td style="padding:8px;border:1px solid #ddd;">{'✅ 已配置' if SMTP_PASS else '❌ 未配置'}</td></tr>
+<tr><td style="padding:8px;border:1px solid #ddd;font-weight:bold;">接收时间</td>
+    <td style="padding:8px;border:1px solid #ddd;">{time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}</td></tr>
+</table>
+<p style="color:#888;font-size:12px;margin-top:16px;">此邮件内容全部来自实时数据库查询，非静态模板。</p>
+<hr style="border:none;border-top:1px solid #eee;">
+<p style="color:#888;font-size:12px;">Correctover License System — correctover.com</p>
 </body></html>""")
-            result = {"sent": ok, "to": to, "smtp_configured": bool(SMTP_PASS)}
+            result = {"sent": ok, "to": to, "smtp_configured": bool(SMTP_PASS), "total_keys": total_keys, "active_keys": active_keys}
             status = "200 OK"
     elif path == "/api/v1/license/resend" and method == "POST":
         """重新发送 License Key 邮件 — 需 admin token"""
@@ -1472,7 +1497,7 @@ def handler(environ, start_response):
                 status = "503 Service Unavailable"
             else:
                 import random
-                trade_order_id = f"NB-TOPUP-{int(time.time())}-{random.randint(1000,9999)}"
+                trade_order_id = f"CV-TOPUP-{int(time.time())}-{random.randint(1000,9999)}"
                 nonce_str = f"{random.randint(100000,999999)}"
                 notify_url = f"https://license-api-neuralbridge-edouhcvhbo.cn-hangzhou.fcapp.run/api/v1/user/topup/callback"
                 return_url = "https://correctover.com/dashboard?topup=1"
