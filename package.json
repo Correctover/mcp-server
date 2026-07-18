@@ -1,7 +1,7 @@
 {
   "name": "correctover-mcp-server",
-  "version": "1.3.1",
-  "description": "MCP Runtime Security & Agent Fault Diagnosis. Diagnose tool call failures, get fault patterns & auto-repair suggestions. 215 fault patterns, 19 CVEs, 97.4% self-heal rate. Free 50 calls/day, $0.05/call after. BYOK, multi-provider failover.",
+  "version": "1.0.7",
+  "description": "The first MCP server that verifies AI outputs in real-time — 6-dimension contract validation (structure, schema, latency, cost, identity, integrity) with automatic self-healing failover across 9+ LLM providers. BYOK, zero-dependency, one-line JSON config for Cursor, Claude Desktop, Windsurf.",
   "main": "index.js",
   "bin": {
     "correctover-mcp-server": "./index.js"
@@ -12,25 +12,24 @@
   "keywords": [
     "mcp",
     "mcp-server",
-    "agent-security",
-    "fault-diagnosis",
-    "runtime-security",
-    "self-healing",
-    "error-recovery",
+    "ai-reliability",
+    "llm-validation",
+    "output-verification",
     "failover",
+    "self-healing",
     "byok",
     "cursor",
     "claude-desktop",
     "windsurf",
     "model-context-protocol",
+    "ai-verification",
+    "contract-validation",
     "multi-provider",
     "llm-router",
-    "ai-reliability",
-    "llm-validation",
+    "ai-quality",
     "openai",
     "anthropic",
-    "debugging",
-    "security"
+    "deepseek"
   ],
   "author": "Correctover",
   "license": "Apache-2.0",
@@ -49,12 +48,13 @@
   "files": [
     "index.js",
     "install.js",
-    "smithery-server.js",
     "README.md",
     "LICENSE"
   ],
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.1",
-    "zod": "^3.24.4"
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "playwright": "^1.61.1"
   }
 }
