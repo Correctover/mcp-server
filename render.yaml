@@ -1,14 +1,18 @@
+# Correctover MCP Server — Render.com Deployment
+# Go to https://dashboard.render.com/select-repo?repo=Correctover/mcp-server
+# Render auto-detects this file on deploy
+
 services:
   - type: web
-    name: correctover-mcp
-    runtime: node
-    region: oregon
+    name: correctover-mcp-server
+    env: node
+    region: singapore
     plan: free
-    buildCommand: npm install --production
+    buildCommand: npm install
     startCommand: node smithery-server.js
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 8080
     healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "18"
+      - key: PORT
+        value: "8080"
