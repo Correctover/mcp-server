@@ -1,7 +1,7 @@
 {
   "name": "correctover-mcp-server",
-  "version": "1.0.7",
-  "description": "The first MCP server that verifies AI outputs in real-time — 6-dimension contract validation (structure, schema, latency, cost, identity, integrity) with automatic self-healing failover across 9+ LLM providers. BYOK, zero-dependency, one-line JSON config for Cursor, Claude Desktop, Windsurf.",
+  "version": "1.1.0",
+  "description": "MCP Runtime Security & Agent Fault Diagnosis. Diagnose tool call failures, get fault patterns & auto-repair suggestions. 215 fault patterns, 19 CVEs, 97.4% self-heal rate. Free 50 calls/day, $0.05/call after. BYOK, multi-provider failover.",
   "main": "index.js",
   "bin": {
     "correctover-mcp-server": "./index.js"
@@ -12,24 +12,25 @@
   "keywords": [
     "mcp",
     "mcp-server",
-    "ai-reliability",
-    "llm-validation",
-    "output-verification",
-    "failover",
+    "agent-security",
+    "fault-diagnosis",
+    "runtime-security",
     "self-healing",
+    "error-recovery",
+    "failover",
     "byok",
     "cursor",
     "claude-desktop",
     "windsurf",
     "model-context-protocol",
-    "ai-verification",
-    "contract-validation",
     "multi-provider",
     "llm-router",
-    "ai-quality",
+    "ai-reliability",
+    "llm-validation",
     "openai",
     "anthropic",
-    "deepseek"
+    "debugging",
+    "security"
   ],
   "author": "Correctover",
   "license": "Apache-2.0",
