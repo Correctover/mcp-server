@@ -37,7 +37,7 @@ jobs:
           fi
 
       - name: Build SDK
-        run: sdk/scripts/build_matrix.sh ${{ matrix.python-version }}
+        run: chmod +x sdk/scripts/build_matrix.sh && sdk/scripts/build_matrix.sh ${{ matrix.python-version }}
         working-directory: ${{ github.workspace }}
         env:
           CORRECTOVER_VERSION: ${{ steps.version.outputs.sdk_version }}
