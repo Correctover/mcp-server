@@ -1,0 +1,106 @@
+{
+  "serverInfo": {
+    "name": "correctover",
+    "version": "1.0.5"
+  },
+  "authentication": {
+    "required": true,
+    "schemes": ["apikey"]
+  },
+  "tools": [
+    {
+      "name": "chat",
+      "description": "Send a chat message to an LLM with automatic output verification. Routes through the best available provider, validates the response across 6 dimensions (structure, schema, latency, cost, identity, integrity), and auto-heals on failure.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "description": "Conversation messages in OpenAI format: [{role: 'user', content: '...'}, ...]"
+          },
+          "model": {
+            "type": "string",
+            "description": "Model name or 'auto' for automatic provider selection. Default: 'auto'."
+          },
+          "provider": {
+            "type": "string",
+            "description": "Force a specific provider: 'openai', 'anthropic', 'deepseek', 'moonshot', 'zhipu', 'qwen', etc."
+          },
+          "temperature": {
+            "type": "number",
+            "description": "Sampling temperature (0.0-2.0)."
+          },
+          "max_tokens": {
+            "type": "integer",
+            "description": "Maximum tokens in response."
+          },
+          "system_prompt": {
+            "type": "string",
+            "description": "System prompt to prepend to the conversation."
+          }
+        },
+        "required": ["messages"]
+      }
+    },
+    {
+      "name": "health",
+      "description": "Check which LLM providers are configured and their current health status.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "providers",
+      "description": "List all supported LLM providers and their detailed configuration status.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "stats",
+      "description": "Get session statistics: total calls, pass rate, failover count, average latency.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "validation_history",
+      "description": "Get recent validation history showing which calls passed/failed verification with details.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "description": "Pagination offset (0 = newest). Default: 0."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Number of records to return. Default: 20, Max: 100."
+          }
+        },
+        "required": []
+      }
+    }
+  ],
+  "resources": [],
+  "prompts": [
+    {
+      "name": "verify",
+      "description": "Verify an LLM response against 6-dimension validation"
+    },
+    {
+      "name": "compare_providers",
+      "description": "Compare configured LLM providers side by side"
+    },
+    {
+      "name": "reliability_audit",
+      "description": "Run a reliability audit on configured providers"
+    }
+  ]
+}
