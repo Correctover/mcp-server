@@ -1,15 +1,28 @@
-# Smithery deployment configuration for Correctover MCP Server
-# See: https://smithery.ai/docs/deploy
-
+# Smithery deployment for Correctover - MCP Runtime Security
 name: correctover
-description: "MCP Runtime Security - Diagnose agent failures, get fault patterns & repair suggestions in real-time"
-version: "1.0.0"
+description: "MCP Runtime Security & Agent Fault Diagnosis. Diagnose tool call failures, get fault patterns & auto-repair suggestions. 215 fault patterns, 19 CVEs, 97.4% self-heal rate. Free 50 calls/day."
+homepage: https://correctover.com
+version: "1.1.0"
 
-# Use the existing Node.js entry point
+categories:
+  - developer-tools
+  - security
+  - debugging
+  - ai-agents
+
+tags:
+  - mcp
+  - agent-security
+  - fault-diagnosis
+  - runtime-security
+  - self-healing
+  - error-recovery
+  - byok
+  - multi-provider
+
 runtime: "node"
 entrypoint: "index.js"
 
-# Environment variables required at runtime
 env:
   - name: ANTHROPIC_API_KEY
     description: "Anthropic API key for Claude models"
@@ -29,8 +42,26 @@ env:
   - name: DEFAULT_PROVIDER
     description: "Default LLM provider (anthropic/openai/mistral/google/cohere)"
     required: false
+  - name: CORRECTOVER_API_KEY
+    description: "Correctover API key for fault diagnosis (get free key at correctover.com)"
+    required: false
 
-# Build steps
+config:
+  type: object
+  properties:
+    defaultProvider:
+      type: string
+      description: "Default LLM provider"
+      default: "anthropic"
+    enableSelfHeal:
+      type: boolean
+      description: "Enable automatic self-healing on detected faults"
+      default: true
+    maxRetries:
+      type: number
+      description: "Max retry attempts before reporting failure"
+      default: 3
+
 build:
   commands:
     - npm install --production
