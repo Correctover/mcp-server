@@ -8,13 +8,13 @@ import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 const app = express();
 app.use(express.json());
 
-const TOOLS_DEF = [
+const TOOLS = [
   { name:'scan', description:'Scan MCP server for security vulnerabilities and fault modes.', inputSchema:{ type:'object', properties:{ target:{ type:'string', description:'MCP server URL or npm package' } }, required:['target'] } },
   { name:'diagnose', description:'Diagnose MCP server connectivity and protocol issues.', inputSchema:{ type:'object', properties:{ target:{ type:'string', description:'Target server' } }, required:['target'] } },
-  { name:'fault_library', description:'Query MCP fault pattern database (215 types, 19 CVEs, 32 frameworks).', inputSchema:{ type:'object', properties:{ category:{ type:'string' } } } },
-  { name:'recovery', description:'Execute auto-recovery for MCP server faults.', inputSchema:{ type:'object', properties:{ fault_type:{ type:'string' }, target:{ type:'string' } }, required:['fault_type','target'] } },
-  { name:'providers', description:'List supported LLM providers.', inputSchema:{ type:'object', properties:{} } },
-  { name:'stats', description:'Server statistics.', inputSchema:{ type:'object', properties:{} } }
+  { name:'fault_library', description:'Query MCP fault pattern database (215 types, 19 CVEs, 32 frameworks).', inputSchema:{ type:'object', properties:{ category:{ type:'string', description:'Fault category' } } } },
+  { name:'recovery', description:'Execute auto-recovery for MCP server faults.', inputSchema:{ type:'object', properties:{ fault_type:{ type:'string', description:'Type of fault' }, target:{ type:'string', description:'Target server' } }, required:['fault_type','target'] } },
+  { name:'providers', description:'List supported LLM providers with config status.', inputSchema:{ type:'object', properties:{} } },
+  { name:'stats', description:'Server statistics: uptime, sessions, version.', inputSchema:{ type:'object', properties:{} } }
 ];
 
 function createServer() {
@@ -38,7 +38,7 @@ app.post('/mcp', async (req, res) => {
     } else if (!sessionId && isInitializeRequest(req.body)) {
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
-        onsessioninitialized: (id) => { transports[id] = transport; console.log('Session:', id); }
+        onsessioninitialized: (id) => { transports[id] = transport; }
       });
       transport.onclose = () => { if (transport.sessionId) delete transports[transport.sessionId]; };
       const server = createServer();
@@ -47,26 +47,22 @@ app.post('/mcp', async (req, res) => {
     } else {
       res.status(400).json({ jsonrpc:'2.0', error:{ code:-32000, message:'Bad request' }, id:null });
     }
-  } catch(e) {
-    console.error(e);
-    if (!res.headersSent) res.status(500).json({ jsonrpc:'2.0', error:{ code:-32603, message:'Internal error' }, id:null });
-  }
+  } catch(e) { console.error(e); if (!res.headersSent) res.status(500).json({ jsonrpc:'2.0', error:{ code:-32603, message:'Internal error' }, id:null }); }
 });
+app.get('/mcp', async (req, res) => { const s=req.headers['mcp-session-id']; if(!s||!transports[s]) return res.status(400).send('No session'); await transports[s].handleRequest(req,res); });
+app.delete('/mcp', async (req, res) => { const s=req.headers['mcp-session-id']; if(!s||!transports[s]) return res.status(400).send('No session'); await transports[s].handleRequest(req,res); });
 
-app.get('/mcp', async (req, res) => {
-  const sid = req.headers['mcp-session-id'];
-  if (!sid || !transports[sid]) return res.status(400).send('No session');
-  await transports[sid].handleRequest(req, res);
-});
-
-app.delete('/mcp', async (req, res) => {
-  const sid = req.headers['mcp-session-id'];
-  if (!sid || !transports[sid]) return res.status(400).send('No session');
-  await transports[sid].handleRequest(req, res);
-});
-
+// Smithery-format server card (matches their spec exactly)
 app.get('/.well-known/mcp/server-card.json', (req, res) => {
-  res.json({ name:'Correctover', description:'MCP Runtime Security — Scan, diagnose, recover. 215 fault patterns, 32 frameworks, 97.4% recovery.', version:'1.3.1', homepage:'https://correctover.com', repository:'https://github.com/Correctover/mcp-server', tools:TOOLS_DEF, transport:{ type:'streamable-http', endpoint:'/mcp' } });
+  res.json({
+    serverInfo: { name: 'Correctover', version: '1.3.1' },
+    description: 'MCP Runtime Security — Scan, diagnose, recover MCP servers. 215 fault patterns, 32 frameworks, 97.4% auto-recovery.',
+    homepage: 'https://correctover.com',
+    repository: 'https://github.com/Correctover/mcp-server',
+    tools: TOOLS,
+    resources: [],
+    prompts: []
+  });
 });
 app.get('/health', (req, res) => res.json({ status:'ok', version:'1.3.1' }));
 app.get('/', (req, res) => res.json({ name:'Correctover', version:'1.3.1' }));
