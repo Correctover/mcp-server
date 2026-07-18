@@ -1,4 +1,3 @@
-# Smithery deployment for Correctover - MCP Runtime Security
 name: correctover
 description: "MCP Runtime Security & Agent Fault Diagnosis. Diagnose tool call failures, get fault patterns & auto-repair suggestions. 215 fault patterns, 19 CVEs, 97.4% self-heal rate. Free 50 calls/day."
 homepage: https://correctover.com
@@ -40,10 +39,10 @@ env:
     description: "Cohere API key"
     required: false
   - name: DEFAULT_PROVIDER
-    description: "Default LLM provider (anthropic/openai/mistral/google/cohere)"
+    description: "Default LLM provider"
     required: false
-  - name: CORRECTOVER_API_KEY
-    description: "Correctover API key for fault diagnosis (get free key at correctover.com)"
+  - name: CORRECTOVER_LICENSE_KEY
+    description: "Correctover license key for Pro features"
     required: false
 
 config:
@@ -55,13 +54,14 @@ config:
       default: "anthropic"
     enableSelfHeal:
       type: boolean
-      description: "Enable automatic self-healing on detected faults"
+      description: "Enable automatic self-healing"
       default: true
     maxRetries:
       type: number
-      description: "Max retry attempts before reporting failure"
+      description: "Max retry attempts"
       default: 3
 
 build:
   commands:
-    - npm install --production
+    - node install.js
+
