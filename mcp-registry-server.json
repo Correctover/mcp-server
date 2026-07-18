@@ -1,43 +1,15 @@
 {
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.correctover/correctover-mcp-server",
-  "description": "MCP Reliability Layer — 6-dimension AI output validation with self-healing failover",
-  "repository": {
-    "url": "https://github.com/Correctover/mcp-server",
-    "source": "github"
-  },
   "version": "1.1.0",
+  "description": "MCP Runtime Security & Agent Fault Diagnosis. Diagnose tool call failures, auto-repair with 97.4% success rate. 215 fault patterns, 19 CVEs. Free 50 calls/day.",
+  "homepage": "https://correctover.com",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "correctover-mcp-server",
-      "version": "1.1.0",
       "transport": {
         "type": "stdio"
-      },
-      "environmentVariables": [
-        {
-          "name": "OPENAI_API_KEY",
-          "description": "OpenAI API key",
-          "isRequired": false,
-          "format": "string",
-          "isSecret": true
-        },
-        {
-          "name": "ANTHROPIC_API_KEY",
-          "description": "Anthropic API key",
-          "isRequired": false,
-          "format": "string",
-          "isSecret": true
-        },
-        {
-          "name": "DEEPSEEK_API_KEY",
-          "description": "DeepSeek API key",
-          "isRequired": false,
-          "format": "string",
-          "isSecret": true
-        }
-      ]
+      }
     }
   ]
 }
