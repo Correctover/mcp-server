@@ -163,7 +163,7 @@ app.post('/mcp', async (req, res) => {
   const server = createServer();
   try {
     const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined,  // stateless mode
+      sessionIdGenerator: () => 'sess-' + Math.random().toString(36).slice(2, 14),
     });
     await server.connect(transport);
     await transport.handleRequest(req, res, req.body);
@@ -203,3 +203,4 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`[correctover] Providers: ${activeProviders.length}/${PROVIDERS.length}`);
   console.log(`[correctover] Ready for Smithery`);
 });
+
