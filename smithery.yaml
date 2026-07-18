@@ -1,67 +1,39 @@
 name: correctover
-description: "MCP Runtime Security & Agent Fault Diagnosis. Diagnose tool call failures, get fault patterns & auto-repair suggestions. 215 fault patterns, 19 CVEs, 97.4% self-heal rate. Free 50 calls/day."
+description: "MCP Runtime Security & Agent Fault Diagnosis. 215 fault patterns, 19 CVEs, 97.4% self-heal rate. Free 50 calls/day."
 homepage: https://correctover.com
-version: "1.1.0"
-
+version: "1.2.0"
 categories:
   - developer-tools
   - security
-  - debugging
   - ai-agents
-
 tags:
   - mcp
   - agent-security
-  - fault-diagnosis
   - runtime-security
   - self-healing
-  - error-recovery
   - byok
   - multi-provider
-
 runtime: "node"
 entrypoint: "index.js"
-
 env:
   - name: ANTHROPIC_API_KEY
-    description: "Anthropic API key for Claude models"
     required: false
   - name: OPENAI_API_KEY
-    description: "OpenAI API key for GPT models"
+    required: false
+  - name: DEEPSEEK_API_KEY
     required: false
   - name: MISTRAL_API_KEY
-    description: "Mistral API key"
     required: false
   - name: GOOGLE_API_KEY
-    description: "Google Gemini API key"
     required: false
   - name: COHERE_API_KEY
-    description: "Cohere API key"
     required: false
-  - name: DEFAULT_PROVIDER
-    description: "Default LLM provider"
-    required: false
-  - name: CORRECTOVER_LICENSE_KEY
-    description: "Correctover license key for Pro features"
-    required: false
-
 config:
   type: object
   properties:
     defaultProvider:
       type: string
-      description: "Default LLM provider"
       default: "anthropic"
-    enableSelfHeal:
-      type: boolean
-      description: "Enable automatic self-healing"
-      default: true
-    maxRetries:
-      type: number
-      description: "Max retry attempts"
-      default: 3
-
 build:
   commands:
-    - node install.js
-
+    - npm install
