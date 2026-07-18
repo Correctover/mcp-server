@@ -4,15 +4,15 @@
 
 services:
   - type: web
-    name: correctover-mcp-server
-    env: node
+    name: correctover-mcp
+    runtime: node
     region: singapore
     plan: free
-    buildCommand: npm install
+    buildCommand: npm install express cors
     startCommand: node smithery-server.js
     healthCheckPath: /health
     envVars:
       - key: NODE_VERSION
         value: "18"
       - key: PORT
-        value: "8080"
+        value: "10000"
