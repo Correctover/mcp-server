@@ -1,105 +1,60 @@
 {
-  "$schema": "https://glama.ai/mcp/schemas/server.json",
-  "name": "correctover-mcp-server",
-  "displayName": "Correctover — MCP Reliability Layer",
-  "description": "The first MCP server that verifies AI outputs in real-time. Routes LLM calls through multiple providers with 6-dimension output validation (structure, schema, latency, cost, identity, integrity) and automatic self-healing. BYOK, zero-dependency, one-line JSON config for Cursor/Claude Desktop.",
-  "category": "ai",
+  "$schema": "https://glama.ai/schema/glama.json",
+  "name": "correctover",
+  "displayName": "Correctover - MCP Runtime Security & Fault Diagnosis",
+  "description": "MCP Runtime Security & Agent Fault Diagnosis. Diagnose tool call failures, get fault patterns & auto-repair suggestions. 215 fault patterns, 19 CVEs, 150K+ empirical data points. 97.4% self-heal rate at 22us P50. Free 50 calls/day, then $0.05/call.",
+  "homepage": "https://correctover.com",
+  "category": "Security & Debugging",
   "tags": [
     "mcp",
-    "llm",
-    "reliability",
-    "failover",
-    "validation",
+    "agent-security",
+    "fault-diagnosis",
+    "runtime-security",
     "self-healing",
-    "cursor",
-    "claude",
-    "byok"
+    "error-recovery",
+    "byok",
+    "multi-provider",
+    "failover",
+    "debugging"
   ],
   "pricing": {
-    "type": "freemium",
-    "description": "Free: unlimited chat with auto-failover (max 2 providers). Pro ($99/yr): 9+ providers, 6-dimension validation, unlimited provider routing. Enterprise ($1,499/mo): private deployment + SLA + custom validation rules."
+    "model": "freemium",
+    "description": "Free 50 calls/day. Pay $0.05/call. Starter $49/mo. Pro $199/mo. Team $499/mo.",
+    "free_tier": "50 calls/day",
+    "paid_plans": [
+      "$49/mo",
+      "$199/mo",
+      "$499/mo",
+      "Enterprise custom"
+    ]
   },
-  "environmentVariables": {
-    "OPENAI_API_KEY": {
-      "description": "OpenAI API key",
-      "required": false
-    },
-    "OPENAI_BASE_URL": {
-      "description": "Override OpenAI base URL (proxy/mirror)",
-      "required": false
-    },
-    "ANTHROPIC_API_KEY": {
+  "environmentVariables": [
+    {
+      "name": "ANTHROPIC_API_KEY",
       "description": "Anthropic API key",
       "required": false
     },
-    "ANTHROPIC_BASE_URL": {
-      "description": "Override Anthropic base URL",
+    {
+      "name": "OPENAI_API_KEY",
+      "description": "OpenAI API key",
       "required": false
     },
-    "DEEPSEEK_API_KEY": {
-      "description": "DeepSeek API key",
+    {
+      "name": "DEFAULT_PROVIDER",
+      "description": "Default LLM provider",
       "required": false
     },
-    "DEEPSEEK_BASE_URL": {
-      "description": "Override DeepSeek base URL",
-      "required": false
-    },
-    "MOONSHOT_API_KEY": {
-      "description": "Moonshot/Kimi API key",
-      "required": false
-    },
-    "MOONSHOT_BASE_URL": {
-      "description": "Override Moonshot base URL",
-      "required": false
-    },
-    "ZHIPU_API_KEY": {
-      "description": "Zhipu AI (GLM) API key",
-      "required": false
-    },
-    "ZHIPU_BASE_URL": {
-      "description": "Override Zhipu base URL",
-      "required": false
-    },
-    "DASHSCOPE_API_KEY": {
-      "description": "DashScope (Qwen) API key",
-      "required": false
-    },
-    "DASHSCOPE_BASE_URL": {
-      "description": "Override DashScope base URL",
-      "required": false
-    },
-    "SILICONFLOW_API_KEY": {
-      "description": "SiliconFlow API key",
-      "required": false
-    },
-    "SILICONFLOW_BASE_URL": {
-      "description": "Override SiliconFlow base URL",
-      "required": false
-    },
-    "GROQ_API_KEY": {
-      "description": "Groq API key",
-      "required": false
-    },
-    "GROQ_BASE_URL": {
-      "description": "Override Groq base URL",
-      "required": false
-    },
-    "TOGETHER_API_KEY": {
-      "description": "Together AI API key",
-      "required": false
-    },
-    "TOGETHER_BASE_URL": {
-      "description": "Override Together base URL",
-      "required": false
-    },
-    "CORRECTOVER_LICENSE_KEY": {
-      "description": "Pro/Enterprise license key for unlimited providers",
+    {
+      "name": "CORRECTOVER_API_KEY",
+      "description": "Correctover API key (free at correctover.com)",
       "required": false
     }
-  },
+  ],
   "build": {
-    "command": "go build -o correctover-mcp-server .",
-    "language": "go"
+    "language": "python",
+    "commands": [
+      "pip install -r requirements.txt"
+    ]
   },
   "maintainers": [
     "Correctover"
