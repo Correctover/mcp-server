@@ -14,7 +14,7 @@ tags:
   - byok
   - multi-provider
 runtime: "node"
-entrypoint: "index.js"
+entrypoint: "smithery-server.js"
 env:
   - name: ANTHROPIC_API_KEY
     required: false
