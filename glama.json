@@ -2,61 +2,21 @@
   "$schema": "https://glama.ai/schema/glama.json",
   "name": "correctover",
   "displayName": "Correctover - MCP Runtime Security & Fault Diagnosis",
-  "description": "MCP Runtime Security & Agent Fault Diagnosis. Diagnose tool call failures, get fault patterns & auto-repair suggestions. 215 fault patterns, 19 CVEs, 150K+ empirical data points. 97.4% self-heal rate at 22us P50. Free 50 calls/day, then $0.05/call.",
+  "description": "MCP Runtime Security & Agent Fault Diagnosis. Scan, diagnose and self-heal MCP tool call failures. 215 fault patterns, 19 CVEs, 97.4% self-heal rate at 22us P50.",
   "homepage": "https://correctover.com",
-  "category": "Security & Debugging",
-  "tags": [
-    "mcp",
-    "agent-security",
-    "fault-diagnosis",
-    "runtime-security",
-    "self-healing",
-    "error-recovery",
-    "byok",
-    "multi-provider",
-    "failover",
-    "debugging"
-  ],
+  "category": "Security",
+  "license": "Apache-2.0",
+  "tags": ["mcp", "agent-security", "fault-diagnosis", "runtime-security", "self-healing", "error-recovery", "byok", "failover", "debugging", "security-scanner"],
   "pricing": {
     "model": "freemium",
-    "description": "Free 50 calls/day. Pay $0.05/call. Starter $49/mo. Pro $199/mo. Team $499/mo.",
-    "free_tier": "50 calls/day",
-    "paid_plans": [
-      "$49/mo",
-      "$199/mo",
-      "$499/mo",
-      "Enterprise custom"
-    ]
+    "description": "Free 50 calls/day. Pay $0.05/call. Starter $49/mo. Pro $199/mo.",
+    "free_tier": "50 calls/day"
   },
   "environmentVariables": [
-    {
-      "name": "ANTHROPIC_API_KEY",
-      "description": "Anthropic API key",
-      "required": false
-    },
-    {
-      "name": "OPENAI_API_KEY",
-      "description": "OpenAI API key",
-      "required": false
-    },
-    {
-      "name": "DEFAULT_PROVIDER",
-      "description": "Default LLM provider",
-      "required": false
-    },
-    {
-      "name": "CORRECTOVER_API_KEY",
-      "description": "Correctover API key (free at correctover.com)",
-      "required": false
-    }
+    {"name": "ANTHROPIC_API_KEY", "description": "Anthropic API key", "required": false},
+    {"name": "OPENAI_API_KEY", "description": "OpenAI API key", "required": false},
+    {"name": "DEFAULT_PROVIDER", "description": "Default LLM provider", "required": false},
+    {"name": "CORRECTOVER_API_KEY", "description": "Correctover API key", "required": false}
   ],
-  "build": {
-    "language": "python",
-    "commands": [
-      "pip install -r requirements.txt"
-    ]
-  },
-  "maintainers": [
-    "Correctover"
-  ]
+  "maintainers": ["Correctover"]
 }
