@@ -1,6 +1,6 @@
 {
   "name": "correctover-mcp-server",
-  "version": "1.2.3",
+  "version": "1.3.0",
   "description": "MCP runtime security. 22\u00b5s validation, 97% self-healing. Detects RCE, SSRF, credential hijacking.",
   "main": "index.js",
   "bin": {
@@ -47,6 +47,7 @@
   },
   "files": [
     "index.js",
+    "license.js",
     "install.js",
     "README.md",
     "LICENSE"
