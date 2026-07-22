@@ -1,6 +1,6 @@
 {
   "name": "correctover-mcp-server",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "MCP runtime security. 22\u00b5s validation, 97% self-healing. Detects RCE, SSRF, credential hijacking.",
   "main": "index.js",
   "bin": {
@@ -41,7 +41,7 @@
   "bugs": {
     "url": "https://github.com/Correctover/mcp-server/issues"
   },
-  "mcpName": "com.correctover/correctover-mcp-server",
+  "mcpName": "com.correctover/mcp-server",
   "engines": {
     "node": ">=18.0.0"
   },
