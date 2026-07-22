@@ -1,7 +1,7 @@
 {
   "name": "correctover-mcp-server",
-  "version": "1.0.7",
-  "description": "The first MCP server that verifies AI outputs in real-time — 6-dimension contract validation (structure, schema, latency, cost, identity, integrity) with automatic self-healing failover across 9+ LLM providers. BYOK, zero-dependency, one-line JSON config for Cursor, Claude Desktop, Windsurf.",
+  "version": "1.2.2",
+  "description": "MCP runtime security. 22\u00b5s validation, 97% self-healing. Detects RCE, SSRF, credential hijacking.",
   "main": "index.js",
   "bin": {
     "correctover-mcp-server": "./index.js"
@@ -41,7 +41,7 @@
   "bugs": {
     "url": "https://github.com/Correctover/mcp-server/issues"
   },
-  "mcpName": "io.github.Correctover/correctover-mcp-server",
+  "mcpName": "com.correctover/correctover-mcp-server",
   "engines": {
     "node": ">=18.0.0"
   },
