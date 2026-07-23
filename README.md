@@ -4,7 +4,10 @@
 [![npm](https://img.shields.io/npm/dm/correctover-mcp-server)](https://www.npmjs.com/package/correctover-mcp-server)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
+[![Featured in awesome-mcp-servers](https://img.shields.io/badge/awesome--mcp--servers-listed-blueviolet)](https://github.com/punkpeye/awesome-mcp-servers) [![Correctover MCP server](https://glama.ai/mcp/servers/Correctover/mcp-server/badges/score.svg)](https://glama.ai/mcp/servers/Correctover/mcp-server)
+
 > **We are the runtime security layer for the MCP ecosystem.**
+> **Featured in [awesome-mcp-servers](https://github.com/punkpeye/awesome-mcp-servers)** — the definitive MCP server directory.
 
 Correctover is the first MCP server purpose-built for **agent fault diagnosis & self-healing**. It monitors tool calls across your LLM providers, detects failures in real-time, and auto-repairs them using a knowledge base of **215 fault patterns** and **19 CVEs** — all at **22μs P50 latency**.
 
